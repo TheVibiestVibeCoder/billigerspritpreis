@@ -988,9 +988,10 @@
                 <div class="info-modal" role="dialog" aria-modal="true" aria-labelledby="info-modal-title">
                     <button class="info-modal-close" type="button" aria-label="Schließen" onclick="document.getElementById('info-overlay').classList.add('hidden')">×</button>
                     <h2 class="info-modal-title" id="info-modal-title">Was zeigt diese Karte?</h2>
-                    <p>Alle Tankstellen in Österreich mit ihren aktuellen Spritpreisen — in Echtzeit, direkt auf der Karte.</p>
+                    <p>Die günstigsten Tankstellen in Österreich — pro Bezirk, in Echtzeit, direkt auf der Karte.</p>
                     <p>Die Preisdaten kommen von der <strong>E-Control API</strong>, der offiziellen Regulierungsbehörde für Energie in Österreich. Tankstellen sind gesetzlich verpflichtet, ihre Preise dort zu melden.</p>
-                    <p>Die Farbe jeder Tankstelle zeigt, wie ihr Preis im Vergleich zu anderen in der Ansicht liegt — von <strong style="color:#22C55E">sehr günstig</strong> bis <strong style="color:#DC2626">sehr teuer</strong>.</p>
+                    <p><strong>Wichtig:</strong> Die E-Control API liefert bewusst nur die <strong>günstigsten Stationen je Bezirk</strong> — nicht alle Tankstellen. Teure Stationen sind daher nicht sichtbar.</p>
+                    <p>Die Farbe zeigt den Preisvergleich innerhalb der angezeigten Stationen — von <strong style="color:#22C55E">sehr günstig</strong> bis <strong style="color:#DC2626">vergleichsweise teuer</strong>.</p>
                     <p class="info-note">⚠️ Dies ist eine Testversion. Es kann zu Fehlern oder veralteten Daten kommen.</p>
                 </div>
             </div>
