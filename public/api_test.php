@@ -1,8 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
+if (PHP_SAPI !== 'cli') {
+    http_response_code(404);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'Not Found';
+    exit;
+}
+
 // ============================================================
 // E-Control API Tester
-// Usage: php api_test.php
+// Usage: php public/api_test.php
 // ============================================================
 
 $results = [];

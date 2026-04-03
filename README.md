@@ -52,6 +52,15 @@ php artisan schedule:list
 php artisan schedule:work
 ```
 
+## Tests
+
+```bash
+composer install
+php artisan test
+```
+
+Hinweis: `php artisan test` nutzt Pest und benoetigt Dev-Dependencies (kein `--no-dev`).
+
 ## ENV
 
 Wichtige Werte in `.env`:
