@@ -160,17 +160,21 @@
             }
 
             .filter-toolbar {
-                display: flex;
-                align-items: center;
-                gap: 0.45rem;
+                --filter-gap: 0.45rem;
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                align-items: stretch;
+                gap: var(--filter-gap);
                 width: 100%;
             }
 
             .fuel-filter {
-                display: flex;
-                gap: 0.4rem;
-                flex: 1;
-                align-items: center;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-column: 1 / span 2;
+                gap: var(--filter-gap);
+                min-width: 0;
+                align-items: stretch;
             }
 
             .fuel-button,
@@ -190,12 +194,15 @@
             }
 
             .fuel-button {
-                flex: 1;
+                flex: none;
+                width: 100%;
                 padding: 0.56rem 0.65rem;
             }
 
             .scope-toggle {
-                min-width: 12.3rem;
+                grid-column: 3;
+                width: 100%;
+                min-width: 0;
                 padding: 0.56rem 0.78rem;
                 background: rgba(196, 229, 251, 0.88);
                 white-space: nowrap;
@@ -1103,8 +1110,15 @@
                 }
 
                 .mobile-top-banner .filter-toolbar {
+                    display: flex;
                     flex-direction: column;
                     gap: 0.42rem;
+                }
+
+                .mobile-top-banner .fuel-filter {
+                    display: flex;
+                    gap: 0.42rem;
+                    flex: 1;
                 }
 
                 .mobile-top-banner .fuel-button,
