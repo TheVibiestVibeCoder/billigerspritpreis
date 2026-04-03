@@ -990,8 +990,8 @@
                     <h2 class="info-modal-title" id="info-modal-title">Was zeigt diese Karte?</h2>
                     <p>Die günstigsten Tankstellen in Österreich — pro Bezirk, in Echtzeit, direkt auf der Karte.</p>
                     <p>Die Preisdaten kommen von der <strong>E-Control API</strong>, der offiziellen Regulierungsbehörde für Energie in Österreich. Tankstellen sind gesetzlich verpflichtet, ihre Preise dort zu melden.</p>
-                    <p><strong>Wichtig:</strong> Die E-Control API liefert bewusst nur die <strong>günstigsten Stationen je Bezirk</strong> — nicht alle Tankstellen. Teure Stationen sind daher nicht sichtbar.</p>
-                    <p>Die Farbe zeigt den Preisvergleich innerhalb der angezeigten Stationen — von <strong style="color:#22C55E">sehr günstig</strong> bis <strong style="color:#DC2626">vergleichsweise teuer</strong>.</p>
+                    <p><strong>Wichtig:</strong> Die API liefert maximal <strong>5 Stationen pro Bezirk</strong> — ausschließlich die günstigsten. Österreich hat ~94 Bezirke, also sind bis zu ~470 Stationen sichtbar. Teure Stationen erscheinen nicht.</p>
+                    <p>Die Farbe zeigt den Preisvergleich unter den angezeigten Stationen — von <strong style="color:#22C55E">sehr günstig</strong> bis <strong style="color:#DC2626">vergleichsweise teuer</strong>.</p>
                     <p class="info-note">⚠️ Dies ist eine Testversion. Es kann zu Fehlern oder veralteten Daten kommen.</p>
                 </div>
             </div>
