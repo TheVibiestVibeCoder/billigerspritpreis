@@ -140,11 +140,11 @@
                 transform: translateX(-50%);
                 z-index: 900;
                 min-height: var(--top-card-height);
-                padding: 0.45rem;
+                padding: 0.34rem;
                 width: min(41rem, calc(100vw - 22rem));
                 min-width: 23rem;
                 display: flex;
-                align-items: center;
+                align-items: stretch;
             }
 
             .mobile-filter-toggle {
@@ -153,10 +153,16 @@
 
             .mobile-filter-panel {
                 display: block;
+                flex: 1 1 auto;
+                width: 100%;
+                min-width: 0;
+                height: 100%;
             }
 
             .mobile-filter-panel-inner {
                 overflow: visible;
+                width: 100%;
+                height: 100%;
             }
 
             .filter-toolbar {
@@ -166,6 +172,7 @@
                 align-items: stretch;
                 gap: var(--filter-gap);
                 width: 100%;
+                height: 100%;
             }
 
             .fuel-filter {
@@ -175,11 +182,13 @@
                 gap: var(--filter-gap);
                 min-width: 0;
                 align-items: stretch;
+                height: 100%;
             }
 
             .fuel-button,
             .scope-toggle {
-                min-height: 44px;
+                min-height: 0;
+                height: 100%;
                 border: 0;
                 border-radius: 11px;
                 font-size: 0.92rem;
@@ -191,19 +200,22 @@
                 transition: transform 160ms ease, background-color 160ms ease, color 160ms ease;
                 color: #09243a;
                 background: rgba(235, 243, 249, 0.95);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
             }
 
             .fuel-button {
                 flex: none;
                 width: 100%;
-                padding: 0.56rem 0.65rem;
+                padding: 0.46rem 0.65rem;
             }
 
             .scope-toggle {
                 grid-column: 3;
                 width: 100%;
                 min-width: 0;
-                padding: 0.56rem 0.78rem;
+                padding: 0.46rem 0.78rem;
                 background: rgba(196, 229, 251, 0.88);
                 white-space: nowrap;
             }
@@ -1085,6 +1097,7 @@
                     grid-template-rows: 1fr;
                     opacity: 1;
                     transition: grid-template-rows 360ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease;
+                    height: auto;
                 }
 
                 .mobile-top-banner .mobile-filter-panel-inner {
@@ -1092,6 +1105,7 @@
                     padding-top: 0.4rem;
                     transition: padding-top 240ms ease, transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
                     transform: translateY(0);
+                    height: auto;
                 }
 
                 .mobile-top-banner .filter-card.is-collapsed .mobile-filter-toggle-chevron {
@@ -1123,6 +1137,7 @@
 
                 .mobile-top-banner .fuel-button,
                 .mobile-top-banner .scope-toggle {
+                    height: auto;
                     min-height: 46px;
                     font-size: 0.92rem;
                 }
