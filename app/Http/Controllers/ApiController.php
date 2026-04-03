@@ -41,10 +41,12 @@ class ApiController extends Controller
         // 60-second browser/CDN cache for austria scope (same data for all viewports);
         // viewport scope varies per bounds so we keep it short but still cacheable.
         $maxAge = $compareScope === 'austria' ? 60 : 30;
+        $noindex = (string) config('seo.robots.noindex', 'noindex, nofollow, noarchive');
 
         return response()->json($payload)
             ->header('Cache-Control', "public, max-age={$maxAge}")
-            ->header('Vary', 'Accept');
+            ->header('Vary', 'Accept')
+            ->header('X-Robots-Tag', $noindex);
     }
 
     public function austriaBoundary(): JsonResponse
@@ -76,7 +78,10 @@ class ApiController extends Controller
             });
         }
 
-        return response()->json($payload);
+        return response()->json($payload)
+            ->header('Cache-Control', 'public, max-age=21600, stale-while-revalidate=86400')
+            ->header('Vary', 'Accept')
+            ->header('X-Robots-Tag', (string) config('seo.robots.noindex', 'noindex, nofollow, noarchive'));
     }
 
     /**
