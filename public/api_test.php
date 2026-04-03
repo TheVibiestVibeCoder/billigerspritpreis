@@ -5,6 +5,7 @@ declare(strict_types=1);
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);
     header('Content-Type: text/plain; charset=utf-8');
+    header('X-Robots-Tag: noindex, nofollow, noarchive');
     echo 'Not Found';
     exit;
 }
