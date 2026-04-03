@@ -38,6 +38,14 @@ class EControlService
 
     public function warmUp(bool $includeClosed = false): void
     {
+        // Force-bust the cache before fetching so the scheduler always does a real
+        // API refresh — not just a cache hit. This ensures data is proactively fresh
+        // every 12 minutes regardless of when the TTL would otherwise expire.
+        foreach (['DIE', 'SUP'] as $fuel) {
+            $cacheKey = sprintf('econtrol:fuel:%s:closed:%s:v3', $fuel, $includeClosed ? '1' : '0');
+            Cache::forget($cacheKey);
+        }
+
         $this->getAllStationsForFuel('DIE', $includeClosed);
         $this->getAllStationsForFuel('SUP', $includeClosed);
     }
