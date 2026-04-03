@@ -414,25 +414,26 @@ class EControlService
             ];
         })->values()->all();
 
-        GasStation::upsert(
-            $rows,
-            ['id'],
-            [
-                'name',
-                'street',
-                'postal_code',
-                'city',
-                'latitude',
-                'longitude',
-                'is_open',
-                'price_diesel',
-                'price_super',
-                'price_tier_diesel',
-                'price_tier_super',
-                'last_updated',
-                'updated_at',
-            ],
-        );
+        $updateColumns = [
+            'name',
+            'street',
+            'postal_code',
+            'city',
+            'latitude',
+            'longitude',
+            'is_open',
+            'price_diesel',
+            'price_super',
+            'price_tier_diesel',
+            'price_tier_super',
+            'last_updated',
+            'updated_at',
+        ];
+
+        // SQLite has a 999 variable limit per query; 15 columns per row → max 66 rows per chunk
+        foreach (array_chunk($rows, 60) as $chunk) {
+            GasStation::upsert($chunk, ['id'], $updateColumns);
+        }
     }
 
     private function client(?string $baseUrl = null)
