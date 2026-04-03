@@ -1126,7 +1126,7 @@
                 .mobile-top-banner .filter-toolbar {
                     display: flex;
                     flex-direction: column;
-                    gap: 0.42rem;
+                    gap: 0.8rem;
                 }
 
                 .mobile-top-banner .fuel-filter {
