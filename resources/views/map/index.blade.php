@@ -23,6 +23,8 @@
             :root {
                 --safe-top: env(safe-area-inset-top, 0px);
                 --safe-bottom: env(safe-area-inset-bottom, 0px);
+                --top-card-top: calc(var(--safe-top) + 0.75rem);
+                --top-card-height: 58px;
                 --spritmap-surface: rgba(255, 255, 255, 0.90);
                 --spritmap-surface-strong: rgba(255, 255, 255, 0.96);
                 --spritmap-border: rgba(8, 50, 84, 0.13);
@@ -86,10 +88,11 @@
 
             .brand-card {
                 position: absolute;
-                top: calc(var(--safe-top) + 0.75rem);
+                top: var(--top-card-top);
                 left: 0.75rem;
                 z-index: 900;
-                padding: 0.5rem 0.68rem;
+                min-height: var(--top-card-height);
+                padding: 0.46rem 0.68rem;
                 max-width: min(10.5rem, calc(100vw - 11.5rem));
             }
 
@@ -105,9 +108,10 @@
 
             .meta-card {
                 position: absolute;
-                top: calc(var(--safe-top) + 0.9rem);
+                top: var(--top-card-top);
                 right: 0.9rem;
                 z-index: 900;
+                min-height: var(--top-card-height);
                 padding: 0.45rem 0.72rem;
                 display: inline-flex;
                 align-items: center;
@@ -131,13 +135,16 @@
 
             .filter-card {
                 position: absolute;
-                top: calc(var(--safe-top) + 0.9rem);
+                top: var(--top-card-top);
                 left: 50%;
                 transform: translateX(-50%);
                 z-index: 900;
+                min-height: var(--top-card-height);
                 padding: 0.45rem;
                 width: min(41rem, calc(100vw - 22rem));
                 min-width: 23rem;
+                display: flex;
+                align-items: center;
             }
 
             .mobile-filter-toggle {
@@ -156,12 +163,14 @@
                 display: flex;
                 align-items: center;
                 gap: 0.45rem;
+                width: 100%;
             }
 
             .fuel-filter {
                 display: flex;
                 gap: 0.4rem;
                 flex: 1;
+                align-items: center;
             }
 
             .fuel-button,
@@ -782,6 +791,7 @@
                 display: flex;
                 flex-direction: column;
                 align-items: flex-start;
+                justify-content: center;
                 gap: 0.15rem;
             }
 
@@ -965,6 +975,8 @@
                     width: auto;
                     min-width: 0;
                     max-width: none;
+                    min-height: 0;
+                    height: auto;
                     margin: 0;
                     padding: 0;
                     background: transparent;
@@ -992,6 +1004,7 @@
 
                 .mobile-top-banner .filter-card {
                     grid-column: 1 / -1;
+                    display: block;
                 }
 
                 .mobile-top-banner .mobile-filter-toggle {
