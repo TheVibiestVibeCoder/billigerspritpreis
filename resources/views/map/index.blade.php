@@ -208,7 +208,7 @@
             .fuel-button {
                 flex: none;
                 width: 100%;
-                padding: 0.58rem 0.65rem;
+                padding: 0.9rem 0.9rem;
             }
 
             .scope-toggle {
