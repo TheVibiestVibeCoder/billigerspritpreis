@@ -71,12 +71,55 @@ class EControlService
 
         $this->persistStations($stations, $fuel);
 
+        // If the API returned nothing, serve from the local SQLite snapshot so the map
+        // always has data during E-Control outages or transient failures.
+        if ($stations->isEmpty()) {
+            $stations = $this->loadFromDatabase($fuel);
+
+            if ($stations->isNotEmpty()) {
+                Log::info('EControl API returned no stations; serving from local database snapshot.', [
+                    'fuel' => $fuel,
+                    'count' => $stations->count(),
+                ]);
+            }
+        }
+
         // Only persist to cache when we actually have data; empty results must not be cached.
         if ($stations->isNotEmpty()) {
             Cache::put($cacheKey, $stations->all(), now()->addSeconds($ttl));
         }
 
         return $stations;
+    }
+
+    private function loadFromDatabase(string $fuel): Collection
+    {
+        $priceColumn = $fuel === 'SUP' ? 'price_super' : 'price_diesel';
+
+        return GasStation::query()
+            ->whereNotNull($priceColumn)
+            ->get()
+            ->map(function (GasStation $station) use ($fuel): array {
+                $price = $fuel === 'SUP' ? $station->price_super : $station->price_diesel;
+
+                return [
+                    'id' => $station->id,
+                    'name' => $station->name,
+                    'street' => (string) ($station->street ?? ''),
+                    'postal_code' => (string) ($station->postal_code ?? ''),
+                    'city' => (string) ($station->city ?? ''),
+                    'latitude' => (float) $station->latitude,
+                    'longitude' => (float) $station->longitude,
+                    'is_open' => (bool) $station->is_open,
+                    'price_diesel' => $station->price_diesel !== null ? round((float) $station->price_diesel, 3) : null,
+                    'price_super' => $station->price_super !== null ? round((float) $station->price_super, 3) : null,
+                    'selected_fuel' => $fuel,
+                    'price' => $price !== null ? round((float) $price, 3) : null,
+                    'last_updated' => $station->last_updated?->toIso8601String(),
+                ];
+            })
+            ->filter(fn (array $s) => is_numeric($s['price']))
+            ->values();
     }
 
     private function getRegions(): Collection
@@ -169,7 +212,9 @@ class EControlService
         foreach ($this->candidateBaseUrls() as $baseUrl) {
             $hadSuccessfulResponse = false;
             $endpoint = rtrim($baseUrl, '/').'/search/gas-stations/by-region';
-            $timeout = (int) config('services.econtrol.timeout', 15);
+            // Shorter timeout for pool requests — the full timeout would otherwise multiply
+            // across all batches when E-Control is slow or down.
+            $timeout = (int) config('services.econtrol.pool_timeout', 8);
 
             $responses = [];
 
