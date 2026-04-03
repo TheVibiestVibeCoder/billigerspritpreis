@@ -733,6 +733,103 @@
                 }
             }
 
+            .brand-card {
+                display: flex;
+                align-items: center;
+                gap: 0.4rem;
+            }
+
+            .info-btn {
+                flex-shrink: 0;
+                width: 18px;
+                height: 18px;
+                border-radius: 999px;
+                border: 1.5px solid var(--spritmap-brand);
+                background: transparent;
+                color: var(--spritmap-brand);
+                font-size: 0.64rem;
+                font-weight: 800;
+                line-height: 1;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+                transition: background-color 160ms ease, color 160ms ease;
+            }
+
+            .info-btn:hover {
+                background: var(--spritmap-brand);
+                color: #ffffff;
+            }
+
+            .info-overlay {
+                position: fixed;
+                inset: 0;
+                z-index: 1100;
+                background: rgba(5, 20, 35, 0.55);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 1rem;
+                backdrop-filter: blur(3px);
+            }
+
+            .info-overlay.hidden {
+                display: none;
+            }
+
+            .info-modal {
+                background: #ffffff;
+                border-radius: 18px;
+                box-shadow: 0 24px 56px rgba(4, 16, 28, 0.28);
+                padding: 1.4rem 1.5rem 1.2rem;
+                max-width: 22rem;
+                width: 100%;
+                position: relative;
+            }
+
+            .info-modal-title {
+                margin: 0 0 0.7rem;
+                font-size: 1rem;
+                font-weight: 800;
+                color: var(--spritmap-brand);
+            }
+
+            .info-modal p {
+                margin: 0 0 0.55rem;
+                font-size: 0.85rem;
+                line-height: 1.45;
+                color: #1a3344;
+            }
+
+            .info-modal .info-note {
+                margin-top: 0.9rem;
+                padding-top: 0.75rem;
+                border-top: 1px solid #e5edf3;
+                font-size: 0.75rem;
+                color: #7a95a8;
+            }
+
+            .info-modal-close {
+                position: absolute;
+                top: 0.7rem;
+                right: 0.8rem;
+                border: 0;
+                background: transparent;
+                font-size: 1.1rem;
+                color: #aab8c2;
+                cursor: pointer;
+                line-height: 1;
+                padding: 0.2rem 0.4rem;
+                border-radius: 8px;
+                transition: background-color 160ms ease;
+            }
+
+            .info-modal-close:hover {
+                background: #f0f5f8;
+            }
+
             .hidden {
                 display: none;
             }
@@ -884,7 +981,19 @@
 
             <section class="ui-card brand-card">
                 <h1 class="brand-title">spritmap.at</h1>
+                <button class="info-btn" type="button" aria-label="Info" onclick="document.getElementById('info-overlay').classList.remove('hidden')">i</button>
             </section>
+
+            <div id="info-overlay" class="info-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+                <div class="info-modal" role="dialog" aria-modal="true" aria-labelledby="info-modal-title">
+                    <button class="info-modal-close" type="button" aria-label="Schließen" onclick="document.getElementById('info-overlay').classList.add('hidden')">×</button>
+                    <h2 class="info-modal-title" id="info-modal-title">Was zeigt diese Karte?</h2>
+                    <p>Alle Tankstellen in Österreich mit ihren aktuellen Spritpreisen — in Echtzeit, direkt auf der Karte.</p>
+                    <p>Die Preisdaten kommen von der <strong>E-Control API</strong>, der offiziellen Regulierungsbehörde für Energie in Österreich. Tankstellen sind gesetzlich verpflichtet, ihre Preise dort zu melden.</p>
+                    <p>Die Farbe jeder Tankstelle zeigt, wie ihr Preis im Vergleich zu anderen in der Ansicht liegt — von <strong style="color:#22C55E">sehr günstig</strong> bis <strong style="color:#DC2626">sehr teuer</strong>.</p>
+                    <p class="info-note">⚠️ Dies ist eine Testversion. Es kann zu Fehlern oder veralteten Daten kommen.</p>
+                </div>
+            </div>
 
             <section id="map-meta" class="ui-card meta-card" aria-live="polite">
                 <span>Stationen</span>
