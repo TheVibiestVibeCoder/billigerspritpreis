@@ -54,6 +54,8 @@ if (mapElement && typeof window.L !== 'undefined') {
     let latestStations = [];
     let currentAbortController = null;
     let moveDebounceHandle = null;
+    let activePopupStationId = null;
+    let isRefreshingMarkers = false;
 
     const loadingElement = document.getElementById('map-loading');
     const emptyElement = document.getElementById('map-empty');
@@ -400,63 +402,93 @@ if (mapElement && typeof window.L !== 'undefined') {
         });
     };
 
-    const renderStations = (stations) => {
-        markerLayer.clearLayers();
-        const safeStations = Array.isArray(stations) ? stations : [];
-        latestStations = safeStations;
-        updateLegendTierCounts(safeStations);
-
-        hideElement(emptyElement);
-
-        if (safeStations.length === 0) {
-            showElement(emptyElement, 'flex');
-            renderLabels();
-
-            return;
+    const renderStations = (stations, { restorePopup = false } = {}) => {
+        if (!restorePopup) {
+            activePopupStationId = null;
         }
 
-        const isMobileViewport = window.innerWidth <= 820;
-        const popupMaxWidth = Math.min(280, window.innerWidth - 48);
-        // On mobile the control banner is at the top; keep extra top padding while
-        // letting the bottom stay mostly free so popups can use vertical space.
-        const autoPanTop = isMobileViewport ? 170 : 88;
-        const autoPanBottom = isMobileViewport ? 28 : 24;
+        isRefreshingMarkers = true;
 
-        safeStations.forEach((station) => {
-            const lat = Number.parseFloat(station.latitude);
-            const lng = Number.parseFloat(station.longitude);
+        try {
+            markerLayer.clearLayers();
+            const safeStations = Array.isArray(stations) ? stations : [];
+            latestStations = safeStations;
+            updateLegendTierCounts(safeStations);
 
-            if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+            hideElement(emptyElement);
+
+            if (safeStations.length === 0) {
+                activePopupStationId = null;
+                showElement(emptyElement, 'flex');
+                renderLabels();
+
                 return;
             }
 
-            const color = station.price_color || '#EAB308';
+            const isMobileViewport = window.innerWidth <= 820;
+            const popupMaxWidth = Math.min(280, window.innerWidth - 48);
+            // On mobile the control banner is at the top; keep extra top padding while
+            // letting the bottom stay mostly free so popups can use vertical space.
+            const autoPanTop = isMobileViewport ? 170 : 88;
+            const autoPanBottom = isMobileViewport ? 28 : 24;
+            let markerToReopen = null;
 
-            const marker = window.L.circleMarker([lat, lng], {
-                radius: 8,
-                color: '#FFFFFF',
-                weight: 2,
-                fillColor: color,
-                fillOpacity: 0.95,
+            safeStations.forEach((station) => {
+                const lat = Number.parseFloat(station.latitude);
+                const lng = Number.parseFloat(station.longitude);
+
+                if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+                    return;
+                }
+
+                const color = station.price_color || '#EAB308';
+                const rawStationId = Number.parseInt(station?.id, 10);
+                const stationId = Number.isFinite(rawStationId) ? rawStationId : null;
+                const markerOptions = {
+                    radius: 8,
+                    color: '#FFFFFF',
+                    weight: 2,
+                    fillColor: color,
+                    fillOpacity: 0.95,
+                };
+
+                if (stationId !== null) {
+                    markerOptions.stationId = stationId;
+                }
+
+                const marker = window.L.circleMarker([lat, lng], markerOptions);
+
+                marker.on('mouseover', () => marker.setStyle({ radius: 11 }));
+                marker.on('mouseout', () => marker.setStyle({ radius: 8 }));
+                marker.bindPopup(buildPopupHtml(station), {
+                    maxWidth: popupMaxWidth,
+                    className: 'spritmap-popup',
+                    autoPan: true,
+                    autoPanPaddingTopLeft: window.L.point(16, autoPanTop),
+                    autoPanPaddingBottomRight: window.L.point(64, autoPanBottom),
+                    closeButton: true,
+                    closeOnClick: true,
+                    closeOnMove: false,
+                    autoClose: true,
+                    offset: window.L.point(0, -8),
+                });
+                marker.addTo(markerLayer);
+
+                if (restorePopup && stationId !== null && stationId === activePopupStationId) {
+                    markerToReopen = marker;
+                }
             });
 
-            marker.on('mouseover', () => marker.setStyle({ radius: 11 }));
-            marker.on('mouseout', () => marker.setStyle({ radius: 8 }));
-            marker.bindPopup(buildPopupHtml(station), {
-                maxWidth: popupMaxWidth,
-                className: 'spritmap-popup',
-                autoPan: true,
-                autoPanPaddingTopLeft: window.L.point(16, autoPanTop),
-                autoPanPaddingBottomRight: window.L.point(64, autoPanBottom),
-                closeButton: true,
-                closeOnClick: true,
-                autoClose: true,
-                offset: window.L.point(0, -8),
-            });
-            marker.addTo(markerLayer);
-        });
+            if (restorePopup && markerToReopen) {
+                markerToReopen.openPopup();
+            } else if (restorePopup) {
+                activePopupStationId = null;
+            }
 
-        renderLabels();
+            renderLabels();
+        } finally {
+            isRefreshingMarkers = false;
+        }
     };
 
     const updateFuelButtons = () => {
@@ -496,7 +528,13 @@ if (mapElement && typeof window.L !== 'undefined') {
         ].join(',');
     };
 
-    const loadStations = async () => {
+    const loadStations = async ({ preservePopup = false } = {}) => {
+        const restorePopupAfterLoad = Boolean(preservePopup);
+
+        if (!restorePopupAfterLoad) {
+            activePopupStationId = null;
+        }
+
         if (currentAbortController) {
             currentAbortController.abort();
         }
@@ -535,7 +573,9 @@ if (mapElement && typeof window.L !== 'undefined') {
                 updateCompareScopeToggle();
             }
 
-            renderStations(Array.isArray(payload.stations) ? payload.stations : []);
+            renderStations(Array.isArray(payload.stations) ? payload.stations : [], {
+                restorePopup: restorePopupAfterLoad,
+            });
             updateMetaBar(payload);
         } catch (error) {
             if (error.name !== 'AbortError') {
@@ -554,7 +594,7 @@ if (mapElement && typeof window.L !== 'undefined') {
         }
 
         moveDebounceHandle = window.setTimeout(() => {
-            loadStations();
+            loadStations({ preservePopup: true });
         }, 250);
     };
 
@@ -574,6 +614,12 @@ if (mapElement && typeof window.L !== 'undefined') {
             }, 500);
         }
 
+        const openedStationId = Number.parseInt(event?.popup?._source?.options?.stationId, 10);
+
+        if (Number.isFinite(openedStationId)) {
+            activePopupStationId = openedStationId;
+        }
+
         const markerPath = event?.popup?._source?._path;
 
         if (markerPath) {
@@ -584,6 +630,17 @@ if (mapElement && typeof window.L !== 'undefined') {
             window.setTimeout(() => {
                 markerPath.classList.remove('marker-pop');
             }, 460);
+        }
+    });
+    map.on('popupclose', (event) => {
+        if (isRefreshingMarkers) {
+            return;
+        }
+
+        const closedStationId = Number.parseInt(event?.popup?._source?.options?.stationId, 10);
+
+        if (!Number.isFinite(closedStationId) || closedStationId === activePopupStationId) {
+            activePopupStationId = null;
         }
     });
 
