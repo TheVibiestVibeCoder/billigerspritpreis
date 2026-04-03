@@ -365,6 +365,11 @@ if (mapElement && typeof window.L !== 'undefined') {
             return;
         }
 
+        const isMobileViewport = window.innerWidth <= 820;
+        const popupMaxWidth = Math.min(280, window.innerWidth - 48);
+        // On mobile the filter bar sits at the bottom (~150px); push autoPan padding up so popups stay visible above it.
+        const autoPanBottom = isMobileViewport ? 160 : 24;
+
         safeStations.forEach((station) => {
             const lat = Number.parseFloat(station.latitude);
             const lng = Number.parseFloat(station.longitude);
@@ -386,9 +391,11 @@ if (mapElement && typeof window.L !== 'undefined') {
             marker.on('mouseover', () => marker.setStyle({ radius: 11 }));
             marker.on('mouseout', () => marker.setStyle({ radius: 8 }));
             marker.bindPopup(buildPopupHtml(station), {
-                maxWidth: 280,
+                maxWidth: popupMaxWidth,
                 className: 'spritmap-popup',
-                autoPan: false,
+                autoPan: true,
+                autoPanPaddingTopLeft: window.L.point(16, 88),
+                autoPanPaddingBottomRight: window.L.point(64, autoPanBottom),
                 closeButton: true,
                 closeOnClick: true,
                 autoClose: true,

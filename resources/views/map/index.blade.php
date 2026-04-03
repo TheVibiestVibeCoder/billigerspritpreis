@@ -47,6 +47,7 @@
             #spritmap-shell {
                 position: relative;
                 height: 100vh;
+                height: 100dvh; /* dynamic viewport height — prevents browser chrome from clipping bottom elements on mobile */
                 width: 100vw;
                 isolation: isolate;
             }
@@ -156,6 +157,8 @@
                 font-weight: 700;
                 line-height: 1;
                 cursor: pointer;
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: transparent;
                 transition: transform 160ms ease, background-color 160ms ease, color 160ms ease;
                 color: #09243a;
                 background: rgba(235, 243, 249, 0.95);
@@ -219,9 +222,12 @@
                 justify-content: space-between;
                 gap: 0.56rem;
                 cursor: pointer;
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: transparent;
                 text-align: left;
                 padding: 0.18rem 0.2rem;
                 border-radius: 10px;
+                min-height: 44px;
                 transition: background-color 180ms ease;
             }
 
@@ -462,19 +468,21 @@
             }
 
             .spritmap-popup .leaflet-popup-close-button {
-                top: 0.62rem;
-                right: 0.64rem;
-                width: 42px;
-                height: 30px;
+                top: 0.5rem;
+                right: 0.5rem;
+                width: 44px;
+                height: 38px;
                 padding: 0 0 2px;
                 border-radius: 14px;
-                line-height: 27px;
+                line-height: 35px;
                 font-size: 1.05rem;
                 font-weight: 400;
                 text-align: center;
                 color: #d1d1d1;
                 background: #f0f0f0;
                 border: 1px solid #dddddd;
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: transparent;
                 transition: background-color 180ms ease, transform 180ms ease;
             }
 
@@ -771,8 +779,10 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                padding: 1rem;
+                padding: calc(env(safe-area-inset-top, 0px) + 1rem) calc(env(safe-area-inset-right, 0px) + 1rem) calc(env(safe-area-inset-bottom, 0px) + 1rem) calc(env(safe-area-inset-left, 0px) + 1rem);
                 backdrop-filter: blur(3px);
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
             }
 
             .info-overlay.hidden {
@@ -784,7 +794,11 @@
                 border-radius: 18px;
                 box-shadow: 0 24px 56px rgba(4, 16, 28, 0.28);
                 padding: 1.4rem 1.5rem 1.2rem;
-                max-width: 22rem;
+                max-width: min(22rem, calc(100vw - 2rem));
+                max-height: calc(100dvh - 4rem);
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior: contain;
                 width: 100%;
                 position: relative;
             }
@@ -813,16 +827,23 @@
 
             .info-modal-close {
                 position: absolute;
-                top: 0.7rem;
-                right: 0.8rem;
+                top: 0.5rem;
+                right: 0.5rem;
                 border: 0;
                 background: transparent;
                 font-size: 1.1rem;
                 color: #aab8c2;
                 cursor: pointer;
                 line-height: 1;
-                padding: 0.2rem 0.4rem;
-                border-radius: 8px;
+                padding: 0;
+                min-width: 44px;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 10px;
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: transparent;
                 transition: background-color 160ms ease;
             }
 
@@ -904,7 +925,7 @@
                 }
 
                 .legend-card {
-                    bottom: calc(var(--safe-bottom) + 8.4rem);
+                    bottom: calc(var(--safe-bottom) + 9.2rem);
                     left: 0.5rem;
                     width: min(16rem, calc(100vw - 1rem));
                     padding: 0.65rem 0.72rem;
@@ -950,7 +971,7 @@
                 .legend-card {
                     left: 0.5rem;
                     right: 0.5rem;
-                    bottom: calc(var(--safe-bottom) + 11.9rem);
+                    bottom: calc(var(--safe-bottom) + 12.7rem);
                     width: auto;
                 }
 
@@ -962,6 +983,28 @@
                 .legend-item {
                     gap: 0.34rem;
                     font-size: 0.7rem;
+                }
+            }
+
+            @media (max-width: 400px) {
+                .brand-card {
+                    max-width: calc(100vw - 8rem);
+                }
+
+                .meta-card {
+                    font-size: 0.64rem;
+                    gap: 0.2rem;
+                    padding: 0.36rem 0.44rem;
+                }
+
+                .filter-card {
+                    left: 0.35rem;
+                    right: 0.35rem;
+                }
+
+                .legend-card {
+                    left: 0.35rem;
+                    right: 0.35rem;
                 }
             }
         </style>
