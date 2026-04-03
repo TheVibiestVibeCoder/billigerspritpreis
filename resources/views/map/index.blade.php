@@ -140,6 +140,18 @@
                 min-width: 23rem;
             }
 
+            .mobile-filter-toggle {
+                display: none;
+            }
+
+            .mobile-filter-panel {
+                display: block;
+            }
+
+            .mobile-filter-panel-inner {
+                overflow: visible;
+            }
+
             .filter-toolbar {
                 display: flex;
                 align-items: center;
@@ -200,6 +212,7 @@
 
             .fuel-button:focus-visible,
             .scope-toggle:focus-visible,
+            .mobile-filter-toggle:focus-visible,
             .legend-toggle:focus-visible,
             .popup-route:focus-visible,
             .state-card button:focus-visible {
@@ -883,6 +896,9 @@
                 .legend-content,
                 .legend-list,
                 .legend-chevron,
+                .mobile-filter-panel,
+                .mobile-filter-panel-inner,
+                .mobile-filter-toggle-chevron,
                 .spritmap-popup .leaflet-popup-content-wrapper,
                 .leaflet-interactive.marker-pop {
                     transition: none;
@@ -958,6 +974,101 @@
                     grid-column: 1 / -1;
                 }
 
+                .mobile-top-banner .mobile-filter-toggle {
+                    width: 100%;
+                    border: 0;
+                    border-radius: 11px;
+                    min-height: 44px;
+                    padding: 0.44rem 0.56rem;
+                    background: rgba(213, 232, 247, 0.88);
+                    color: #0a344f;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 0.52rem;
+                    cursor: pointer;
+                    touch-action: manipulation;
+                    -webkit-tap-highlight-color: transparent;
+                    transition: background-color 200ms ease, transform 200ms ease;
+                }
+
+                .mobile-top-banner .mobile-filter-toggle:hover {
+                    background: #d4ebfa;
+                    transform: translateY(-1px);
+                }
+
+                .mobile-filter-toggle-text {
+                    display: grid;
+                    gap: 0.05rem;
+                    min-width: 0;
+                    text-align: left;
+                }
+
+                .mobile-filter-toggle-title {
+                    font-size: 0.7rem;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    font-weight: 800;
+                    color: #256185;
+                }
+
+                .mobile-filter-toggle-summary {
+                    font-size: 0.8rem;
+                    font-weight: 700;
+                    color: #0a344f;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .mobile-filter-toggle-chevron {
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 999px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #0f4f69;
+                    background: rgba(14, 165, 233, 0.18);
+                    flex-shrink: 0;
+                    transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1), background-color 180ms ease;
+                }
+
+                .mobile-filter-toggle-chevron svg {
+                    width: 12px;
+                    height: 12px;
+                    fill: currentColor;
+                }
+
+                .mobile-top-banner .mobile-filter-panel {
+                    display: grid;
+                    grid-template-rows: 1fr;
+                    opacity: 1;
+                    transition: grid-template-rows 360ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease;
+                }
+
+                .mobile-top-banner .mobile-filter-panel-inner {
+                    overflow: hidden;
+                    padding-top: 0.4rem;
+                    transition: padding-top 240ms ease, transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+                    transform: translateY(0);
+                }
+
+                .mobile-top-banner .filter-card.is-collapsed .mobile-filter-toggle-chevron {
+                    transform: rotate(-90deg);
+                    background: rgba(148, 163, 184, 0.24);
+                }
+
+                .mobile-top-banner .filter-card.is-collapsed .mobile-filter-panel {
+                    grid-template-rows: 0fr;
+                    opacity: 0.18;
+                }
+
+                .mobile-top-banner .filter-card.is-collapsed .mobile-filter-panel-inner {
+                    padding-top: 0;
+                    transform: translateY(-0.24rem);
+                }
+
                 .mobile-top-banner .filter-toolbar {
                     flex-direction: column;
                     gap: 0.42rem;
@@ -1026,6 +1137,10 @@
                     gap: 0.2rem;
                 }
 
+                .mobile-filter-toggle-summary {
+                    font-size: 0.75rem;
+                }
+
                 .legend-card {
                     left: 0.5rem;
                     right: 0.5rem;
@@ -1090,8 +1205,35 @@
                     <span id="map-meta-scope" class="meta-value">Ansicht</span>
                 </section>
 
-                <section class="ui-card filter-card" aria-label="Kraftstofffilter">
-                    <x-fuel-filter :fuel="$initialFuel" :compare-scope="$initialCompareScope" />
+                <section class="ui-card filter-card" aria-label="Kraftstofffilter" data-mobile-filter-card>
+                    <button
+                        type="button"
+                        class="mobile-filter-toggle"
+                        data-mobile-filter-toggle
+                        aria-expanded="true"
+                        aria-controls="mobile-filter-panel"
+                    >
+                        <span class="mobile-filter-toggle-text">
+                            <span class="mobile-filter-toggle-title">Filter</span>
+                            <span class="mobile-filter-toggle-summary" data-mobile-filter-summary>Diesel · Ansicht</span>
+                        </span>
+                        <span class="mobile-filter-toggle-chevron" aria-hidden="true">
+                            <svg viewBox="0 0 20 20">
+                                <path d="M5.6 7.1 10 11.5l4.4-4.4 1.2 1.2-5.6 5.6-5.6-5.6z" />
+                            </svg>
+                        </span>
+                    </button>
+
+                    <div
+                        id="mobile-filter-panel"
+                        class="mobile-filter-panel"
+                        data-mobile-filter-panel
+                        aria-hidden="false"
+                    >
+                        <div class="mobile-filter-panel-inner">
+                            <x-fuel-filter :fuel="$initialFuel" :compare-scope="$initialCompareScope" />
+                        </div>
+                    </div>
                 </section>
             </section>
 
