@@ -144,7 +144,7 @@
                 width: min(41rem, calc(100vw - 22rem));
                 min-width: 23rem;
                 display: flex;
-                align-items: stretch;
+                align-items: center;
             }
 
             .mobile-filter-toggle {
@@ -152,27 +152,28 @@
             }
 
             .mobile-filter-panel {
-                display: block;
+                display: flex;
                 flex: 1 1 auto;
                 width: 100%;
                 min-width: 0;
-                height: 100%;
+                height: auto;
+                align-items: center;
             }
 
             .mobile-filter-panel-inner {
                 overflow: visible;
                 width: 100%;
-                height: 100%;
+                height: auto;
             }
 
             .filter-toolbar {
                 --filter-gap: 0.45rem;
                 display: grid;
                 grid-template-columns: repeat(3, minmax(0, 1fr));
-                align-items: stretch;
+                align-items: center;
                 gap: var(--filter-gap);
                 width: 100%;
-                height: 100%;
+                height: auto;
             }
 
             .fuel-filter {
@@ -181,14 +182,14 @@
                 grid-column: 1 / span 2;
                 gap: var(--filter-gap);
                 min-width: 0;
-                align-items: stretch;
-                height: 100%;
+                align-items: center;
+                height: auto;
             }
 
             .fuel-button,
             .scope-toggle {
-                min-height: 0;
-                height: 100%;
+                min-height: 48px;
+                height: auto;
                 border: 0;
                 border-radius: 11px;
                 font-size: 0.92rem;
@@ -208,7 +209,7 @@
             .fuel-button {
                 flex: none;
                 width: 100%;
-                padding: 0.9rem 0.9rem;
+                padding: 0.58rem 0.65rem;
             }
 
             .scope-toggle {
@@ -1098,14 +1099,16 @@
                     opacity: 1;
                     transition: grid-template-rows 360ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease;
                     height: auto;
+                    overflow: hidden;
                 }
 
                 .mobile-top-banner .mobile-filter-panel-inner {
                     overflow: hidden;
                     padding-top: 0.4rem;
-                    transition: padding-top 240ms ease, transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+                    transition: padding-top 240ms ease, transform 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease;
                     transform: translateY(0);
                     height: auto;
+                    opacity: 1;
                 }
 
                 .mobile-top-banner .filter-card.is-collapsed .mobile-filter-toggle-chevron {
@@ -1115,24 +1118,27 @@
 
                 .mobile-top-banner .filter-card.is-collapsed .mobile-filter-panel {
                     grid-template-rows: 0fr;
-                    opacity: 0.18;
+                    opacity: 0;
+                    pointer-events: none;
                 }
 
                 .mobile-top-banner .filter-card.is-collapsed .mobile-filter-panel-inner {
                     padding-top: 0;
                     transform: translateY(-0.24rem);
+                    opacity: 0;
                 }
 
                 .mobile-top-banner .filter-toolbar {
                     display: flex;
                     flex-direction: column;
-                    gap: 0.8rem;
+                    gap: 0.42rem;
                 }
 
                 .mobile-top-banner .fuel-filter {
                     display: flex;
                     gap: 0.42rem;
-                    flex: 1;
+                    width: 100%;
+                    align-items: stretch;
                 }
 
                 .mobile-top-banner .fuel-button,
@@ -1146,6 +1152,13 @@
                     width: 100%;
                     min-width: 0;
                     white-space: normal;
+                }
+
+                .mobile-top-banner .fuel-button {
+                    flex: 1 1 0;
+                    width: auto;
+                    min-width: 0;
+                    justify-content: center;
                 }
 
                 .legend-card {
