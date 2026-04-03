@@ -380,8 +380,10 @@ if (mapElement && typeof window.L !== 'undefined') {
 
         const isMobileViewport = window.innerWidth <= 820;
         const popupMaxWidth = Math.min(280, window.innerWidth - 48);
-        // On mobile the filter bar sits at the bottom (~150px); push autoPan padding up so popups stay visible above it.
-        const autoPanBottom = isMobileViewport ? 160 : 24;
+        // On mobile the control banner is at the top; keep extra top padding while
+        // letting the bottom stay mostly free so popups can use vertical space.
+        const autoPanTop = isMobileViewport ? 170 : 88;
+        const autoPanBottom = isMobileViewport ? 28 : 24;
 
         safeStations.forEach((station) => {
             const lat = Number.parseFloat(station.latitude);
@@ -407,7 +409,7 @@ if (mapElement && typeof window.L !== 'undefined') {
                 maxWidth: popupMaxWidth,
                 className: 'spritmap-popup',
                 autoPan: true,
-                autoPanPaddingTopLeft: window.L.point(16, 88),
+                autoPanPaddingTopLeft: window.L.point(16, autoPanTop),
                 autoPanPaddingBottomRight: window.L.point(64, autoPanBottom),
                 closeButton: true,
                 closeOnClick: true,
@@ -594,4 +596,3 @@ if (mapElement && typeof window.L !== 'undefined') {
         loadStations();
     }
 }
-

@@ -80,6 +80,10 @@
                 backdrop-filter: blur(10px) saturate(1.15);
             }
 
+            .mobile-top-banner {
+                position: static;
+            }
+
             .brand-card {
                 position: absolute;
                 top: calc(var(--safe-top) + 0.75rem);
@@ -895,57 +899,84 @@
             }
 
             @media (max-width: 820px) {
-                .brand-card,
-                .filter-card,
-                .legend-card,
-                .meta-card {
-                    box-shadow: 0 14px 30px rgba(8, 32, 50, 0.18);
-                }
-
-                .brand-card {
+                .mobile-top-banner {
+                    position: absolute;
                     top: calc(var(--safe-top) + 0.4rem);
                     left: 0.5rem;
-                    max-width: calc(100vw - 9.6rem);
-                    padding: 0.44rem 0.58rem;
+                    right: 0.5rem;
+                    z-index: 905;
+                    display: grid;
+                    grid-template-columns: minmax(0, 1fr) auto;
+                    align-items: start;
+                    gap: 0.45rem 0.58rem;
+                    padding: 0.5rem 0.58rem 0.56rem;
+                    background: var(--spritmap-surface-strong);
+                    border: 1px solid var(--spritmap-border);
+                    border-radius: 16px;
+                    box-shadow: 0 14px 30px rgba(8, 32, 50, 0.2);
+                    backdrop-filter: blur(10px) saturate(1.15);
                 }
 
-                .meta-card {
-                    top: calc(var(--safe-top) + 0.45rem);
-                    right: 0.5rem;
-                    padding: 0.42rem 0.56rem;
+                .mobile-top-banner .brand-card,
+                .mobile-top-banner .meta-card,
+                .mobile-top-banner .filter-card {
+                    position: static;
+                    top: auto;
+                    right: auto;
+                    left: auto;
+                    transform: none;
+                    z-index: auto;
+                    width: auto;
+                    min-width: 0;
+                    max-width: none;
+                    margin: 0;
+                    padding: 0;
+                    background: transparent;
+                    border: 0;
+                    border-radius: 0;
+                    box-shadow: none;
+                    backdrop-filter: none;
+                }
+
+                .mobile-top-banner .brand-card {
+                    align-self: center;
+                }
+
+                .mobile-top-banner .brand-title {
+                    font-size: 0.9rem;
+                }
+
+                .mobile-top-banner .meta-card {
+                    justify-self: end;
+                    align-self: center;
                     font-size: 0.7rem;
                     gap: 0.28rem;
+                    white-space: nowrap;
                 }
 
-                .filter-card {
-                    top: auto;
-                    bottom: calc(var(--safe-bottom) + 0.5rem);
-                    left: 0.5rem;
-                    right: 0.5rem;
-                    transform: none;
-                    width: auto;
-                    padding: 0.42rem;
+                .mobile-top-banner .filter-card {
+                    grid-column: 1 / -1;
                 }
 
-                .filter-toolbar {
+                .mobile-top-banner .filter-toolbar {
                     flex-direction: column;
                     gap: 0.42rem;
                 }
 
-                .fuel-button,
-                .scope-toggle {
-                    min-height: 48px;
-                    font-size: 0.93rem;
+                .mobile-top-banner .fuel-button,
+                .mobile-top-banner .scope-toggle {
+                    min-height: 46px;
+                    font-size: 0.92rem;
                 }
 
-                .scope-toggle {
+                .mobile-top-banner .scope-toggle {
                     width: 100%;
                     min-width: 0;
                     white-space: normal;
                 }
 
                 .legend-card {
-                    bottom: calc(var(--safe-bottom) + 9.2rem);
+                    bottom: calc(var(--safe-bottom) + 0.6rem);
                     left: 0.5rem;
                     width: min(16rem, calc(100vw - 1rem));
                     padding: 0.65rem 0.72rem;
@@ -966,7 +997,7 @@
 
                 .map-state {
                     justify-content: flex-start;
-                    padding-top: calc(var(--safe-top) + 4.6rem);
+                    padding-top: calc(var(--safe-top) + 8rem);
                 }
 
                 .state-card {
@@ -979,19 +1010,26 @@
             }
 
             @media (max-width: 560px) {
-                .brand-title {
-                    font-size: 0.88rem;
+                .mobile-top-banner {
+                    left: 0.45rem;
+                    right: 0.45rem;
+                    padding: 0.46rem 0.5rem 0.52rem;
+                    gap: 0.38rem 0.48rem;
                 }
 
-                .meta-card {
-                    top: calc(var(--safe-top) + 3.35rem);
-                    right: 0.5rem;
+                .mobile-top-banner .brand-title {
+                    font-size: 0.86rem;
+                }
+
+                .mobile-top-banner .meta-card {
+                    font-size: 0.66rem;
+                    gap: 0.2rem;
                 }
 
                 .legend-card {
                     left: 0.5rem;
                     right: 0.5rem;
-                    bottom: calc(var(--safe-bottom) + 12.7rem);
+                    bottom: calc(var(--safe-bottom) + 0.52rem);
                     width: auto;
                 }
 
@@ -1007,19 +1045,13 @@
             }
 
             @media (max-width: 400px) {
-                .brand-card {
-                    max-width: calc(100vw - 8rem);
-                }
-
-                .meta-card {
-                    font-size: 0.64rem;
-                    gap: 0.2rem;
-                    padding: 0.36rem 0.44rem;
-                }
-
-                .filter-card {
+                .mobile-top-banner {
                     left: 0.35rem;
                     right: 0.35rem;
+                }
+
+                .mobile-top-banner .meta-card {
+                    font-size: 0.62rem;
                 }
 
                 .legend-card {
@@ -1042,12 +1074,25 @@
                 data-initial-compare-scope="{{ $initialCompareScope }}"
             ></div>
 
-            <section class="ui-card brand-card">
-                <div class="brand-top">
-                    <h1 class="brand-title">spritmap.at</h1>
-                    <button class="info-btn" type="button" aria-label="Info" onclick="document.getElementById('info-overlay').classList.remove('hidden')">i</button>
-                </div>
-                <span class="brand-updated" id="brand-updated" aria-live="polite"></span>
+            <section class="mobile-top-banner">
+                <section class="ui-card brand-card">
+                    <div class="brand-top">
+                        <h1 class="brand-title">spritmap.at</h1>
+                        <button class="info-btn" type="button" aria-label="Info" onclick="document.getElementById('info-overlay').classList.remove('hidden')">i</button>
+                    </div>
+                    <span class="brand-updated" id="brand-updated" aria-live="polite"></span>
+                </section>
+
+                <section id="map-meta" class="ui-card meta-card" aria-live="polite">
+                    <span>Stationen</span>
+                    <span id="map-meta-count" class="meta-value">-</span>
+                    <span class="meta-divider">|</span>
+                    <span id="map-meta-scope" class="meta-value">Ansicht</span>
+                </section>
+
+                <section class="ui-card filter-card" aria-label="Kraftstofffilter">
+                    <x-fuel-filter :fuel="$initialFuel" :compare-scope="$initialCompareScope" />
+                </section>
             </section>
 
             <div id="info-overlay" class="info-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
@@ -1061,17 +1106,6 @@
                     <p class="info-note">⚠️ Dies ist eine Testversion. Es kann zu Fehlern oder veralteten Daten kommen.</p>
                 </div>
             </div>
-
-            <section id="map-meta" class="ui-card meta-card" aria-live="polite">
-                <span>Stationen</span>
-                <span id="map-meta-count" class="meta-value">-</span>
-                <span class="meta-divider">|</span>
-                <span id="map-meta-scope" class="meta-value">Ansicht</span>
-            </section>
-
-            <section class="ui-card filter-card" aria-label="Kraftstofffilter">
-                <x-fuel-filter :fuel="$initialFuel" :compare-scope="$initialCompareScope" />
-            </section>
 
             <section class="ui-card legend-card is-collapsed" aria-label="Preislegende" data-legend>
                 <button
@@ -1157,4 +1191,3 @@
         </main>
     </body>
 </html>
-
