@@ -38,8 +38,9 @@ return [
     'econtrol' => [
         'base_url' => env('ECONTROL_API_BASE', 'https://api.e-control.at/api'),
         'fallback_base_url' => env('ECONTROL_API_FALLBACK_BASE', 'https://api.e-control.at/sprit/1.0'),
-        'cache_ttl' => (int) env('ECONTROL_CACHE_TTL', 900),
+        'cache_ttl' => (int) env('ECONTROL_CACHE_TTL', 1200),
         'timeout' => (int) env('ECONTROL_HTTP_TIMEOUT', 15),
+        'pool_timeout' => (int) env('ECONTROL_POOL_TIMEOUT', 8),
     ],
 
 ];
