@@ -67,12 +67,21 @@ if (mapElement && typeof window.L !== 'undefined') {
     const legendCardElement = document.querySelector('[data-legend]');
     const legendToggleElement = document.querySelector('[data-legend-toggle]');
     const legendContentElement = document.querySelector('[data-legend-content]');
+    const legendTierToggleElements = document.querySelectorAll('[data-tier-toggle]');
+    const legendTierRowElements = document.querySelectorAll('[data-tier-row]');
     const mobileFilterCardElement = document.querySelector('[data-mobile-filter-card]');
     const mobileFilterToggleElement = document.querySelector('[data-mobile-filter-toggle]');
     const mobileFilterPanelElement = document.querySelector('[data-mobile-filter-panel]');
     const mobileFilterSummaryElement = document.querySelector('[data-mobile-filter-summary]');
     const stationCountFormatter = new Intl.NumberFormat('de-AT');
     let mobileFilterCollapsed = true;
+    const tierFilterState = {
+        1: true,
+        2: true,
+        3: true,
+        4: true,
+        5: true,
+    };
 
     const map = window.L.map(mapElement, {
         zoomControl: false,
@@ -199,6 +208,63 @@ if (mapElement && typeof window.L !== 'undefined') {
 
         element.classList.add('hidden');
         element.style.display = 'none';
+    };
+
+    const normalizeTier = (value, fallback = null) => {
+        const parsed = Number.parseInt(value, 10);
+
+        if (Number.isFinite(parsed) && parsed >= 1 && parsed <= 5) {
+            return parsed;
+        }
+
+        return fallback;
+    };
+
+    const isTierEnabled = (tier) => tierFilterState[tier] !== false;
+
+    const filterStationsByTier = (stations = []) => {
+        if (!Array.isArray(stations)) {
+            return [];
+        }
+
+        return stations.filter((station) => {
+            const tier = normalizeTier(station?.price_tier, 3);
+
+            return isTierEnabled(tier);
+        });
+    };
+
+    const updateLegendTierUi = () => {
+        legendTierToggleElements.forEach((toggle) => {
+            const tier = normalizeTier(toggle.dataset.tierToggle, null);
+
+            if (tier === null) {
+                return;
+            }
+
+            const enabled = isTierEnabled(tier);
+            toggle.checked = enabled;
+            toggle.setAttribute('aria-checked', String(enabled));
+        });
+
+        legendTierRowElements.forEach((row) => {
+            const tier = normalizeTier(row.dataset.tierRow, null);
+
+            if (tier === null) {
+                return;
+            }
+
+            row.classList.toggle('is-disabled', !isTierEnabled(tier));
+        });
+    };
+
+    const updateVisibleStationCount = (stations = null) => {
+        if (!metaCountElement) {
+            return;
+        }
+
+        const filtered = Array.isArray(stations) ? stations : filterStationsByTier(latestStations);
+        metaCountElement.textContent = stationCountFormatter.format(filtered.length);
     };
 
     const setMetaLoadingState = (isLoading) => {
@@ -382,7 +448,7 @@ if (mapElement && typeof window.L !== 'undefined') {
             return;
         }
 
-        latestStations.forEach((station) => {
+        filterStationsByTier(latestStations).forEach((station) => {
             const lat = Number.parseFloat(station.latitude);
             const lng = Number.parseFloat(station.longitude);
             const price = resolveSelectedPrice(station);
@@ -414,6 +480,9 @@ if (mapElement && typeof window.L !== 'undefined') {
             const safeStations = Array.isArray(stations) ? stations : [];
             latestStations = safeStations;
             updateLegendTierCounts(safeStations);
+            updateLegendTierUi();
+            const visibleStations = filterStationsByTier(safeStations);
+            updateVisibleStationCount(visibleStations);
 
             hideElement(emptyElement);
 
@@ -433,7 +502,7 @@ if (mapElement && typeof window.L !== 'undefined') {
             const autoPanBottom = isMobileViewport ? 28 : 24;
             let markerToReopen = null;
 
-            safeStations.forEach((station) => {
+            visibleStations.forEach((station) => {
                 const lat = Number.parseFloat(station.latitude);
                 const lng = Number.parseFloat(station.longitude);
 
@@ -577,6 +646,7 @@ if (mapElement && typeof window.L !== 'undefined') {
                 restorePopup: restorePopupAfterLoad,
             });
             updateMetaBar(payload);
+            updateVisibleStationCount();
         } catch (error) {
             if (error.name !== 'AbortError') {
                 console.error(error);
@@ -670,6 +740,22 @@ if (mapElement && typeof window.L !== 'undefined') {
         setLegendCollapsed(!collapsed);
     });
 
+    legendTierToggleElements.forEach((toggle) => {
+        const tier = normalizeTier(toggle.dataset.tierToggle, null);
+
+        if (tier === null) {
+            return;
+        }
+
+        tierFilterState[tier] = toggle.checked;
+
+        toggle.addEventListener('change', () => {
+            tierFilterState[tier] = toggle.checked;
+            updateLegendTierUi();
+            renderStations(latestStations, { restorePopup: true });
+        });
+    });
+
     mobileFilterToggleElement?.addEventListener('click', () => {
         const collapsed = mobileFilterCardElement?.classList.contains('is-collapsed') ?? true;
         setMobileFilterCollapsed(!collapsed);
@@ -688,6 +774,7 @@ if (mapElement && typeof window.L !== 'undefined') {
     setMobileFilterCollapsed(true);
     updateMetaBar();
     setLegendCollapsed(true);
+    updateLegendTierUi();
 
     if ('geolocation' in navigator) {
         navigator.geolocation.getCurrentPosition(

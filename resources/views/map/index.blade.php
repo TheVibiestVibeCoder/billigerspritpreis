@@ -334,8 +334,11 @@
                 align-items: center;
                 justify-content: space-between;
                 gap: 0.64rem;
+                padding: 0.2rem 0.16rem;
+                border-radius: 10px;
                 font-size: 0.78rem;
                 color: var(--spritmap-text-subtle);
+                transition: opacity 180ms ease, filter 180ms ease;
             }
 
             .legend-left {
@@ -343,6 +346,13 @@
                 align-items: center;
                 gap: 0.52rem;
                 min-width: 0;
+            }
+
+            .legend-right {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.44rem;
+                flex-shrink: 0;
             }
 
             .legend-dot {
@@ -364,6 +374,76 @@
                 font-weight: 700;
                 color: #0f4f69;
                 background: rgba(14, 165, 233, 0.16);
+            }
+
+            .legend-switch {
+                position: relative;
+                display: inline-flex;
+                width: 40px;
+                height: 24px;
+                cursor: pointer;
+                flex-shrink: 0;
+            }
+
+            .legend-switch-input {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                opacity: 0;
+                cursor: pointer;
+                z-index: 1;
+            }
+
+            .legend-switch-track {
+                position: relative;
+                width: 100%;
+                height: 100%;
+                border-radius: 999px;
+                background: #c8d7e3;
+                box-shadow: inset 0 0 0 1px rgba(85, 110, 131, 0.24);
+                transition: background-color 180ms ease, box-shadow 180ms ease;
+            }
+
+            .legend-switch-track::after {
+                content: '';
+                position: absolute;
+                top: 3px;
+                left: 3px;
+                width: 18px;
+                height: 18px;
+                border-radius: 999px;
+                background: #ffffff;
+                box-shadow: 0 1px 3px rgba(6, 27, 43, 0.36);
+                transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+            }
+
+            .legend-switch-input:checked + .legend-switch-track {
+                background: linear-gradient(135deg, #0f766e, #0ea5e9);
+                box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.34);
+            }
+
+            .legend-switch-input:checked + .legend-switch-track::after {
+                transform: translateX(16px);
+            }
+
+            .legend-switch-input:focus-visible + .legend-switch-track {
+                outline: 2px solid #0ea5e9;
+                outline-offset: 2px;
+            }
+
+            .legend-item.is-disabled {
+                opacity: 0.56;
+            }
+
+            .legend-item.is-disabled .legend-left {
+                filter: saturate(0.64);
+            }
+
+            .legend-item.is-disabled .legend-count {
+                color: #6e8191;
+                background: rgba(148, 163, 184, 0.20);
             }
 
             .legend-card.is-collapsed .legend-chevron {
@@ -1238,6 +1318,32 @@
                     gap: 0.34rem;
                     font-size: 0.7rem;
                 }
+
+                .legend-right {
+                    gap: 0.28rem;
+                }
+
+                .legend-count {
+                    min-width: 1.55rem;
+                    padding: 0.08rem 0.26rem;
+                    font-size: 0.62rem;
+                }
+
+                .legend-switch {
+                    width: 34px;
+                    height: 20px;
+                }
+
+                .legend-switch-track::after {
+                    top: 2px;
+                    left: 2px;
+                    width: 16px;
+                    height: 16px;
+                }
+
+                .legend-switch-input:checked + .legend-switch-track::after {
+                    transform: translateX(14px);
+                }
             }
 
             @media (max-width: 400px) {
@@ -1349,40 +1455,70 @@
                 <div id="legend-content" class="legend-content" data-legend-content aria-hidden="true">
                     <div class="legend-content-inner">
                         <ul class="legend-list">
-                            <li class="legend-item">
+                            <li class="legend-item" data-tier-row="1">
                                 <span class="legend-left">
                                     <span class="legend-dot" style="background:#22C55E"></span>
                                     <span>Sehr günstig</span>
                                 </span>
-                                <span class="legend-count" data-tier-count="1">0</span>
+                                <span class="legend-right">
+                                    <span class="legend-count" data-tier-count="1">0</span>
+                                    <label class="legend-switch" aria-label="Sehr günstig anzeigen">
+                                        <input class="legend-switch-input" type="checkbox" data-tier-toggle="1" checked>
+                                        <span class="legend-switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </span>
                             </li>
-                            <li class="legend-item">
+                            <li class="legend-item" data-tier-row="2">
                                 <span class="legend-left">
                                     <span class="legend-dot" style="background:#84CC16"></span>
                                     <span>Eher günstig</span>
                                 </span>
-                                <span class="legend-count" data-tier-count="2">0</span>
+                                <span class="legend-right">
+                                    <span class="legend-count" data-tier-count="2">0</span>
+                                    <label class="legend-switch" aria-label="Eher günstig anzeigen">
+                                        <input class="legend-switch-input" type="checkbox" data-tier-toggle="2" checked>
+                                        <span class="legend-switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </span>
                             </li>
-                            <li class="legend-item">
+                            <li class="legend-item" data-tier-row="3">
                                 <span class="legend-left">
                                     <span class="legend-dot" style="background:#EAB308"></span>
                                     <span>Durchschnitt</span>
                                 </span>
-                                <span class="legend-count" data-tier-count="3">0</span>
+                                <span class="legend-right">
+                                    <span class="legend-count" data-tier-count="3">0</span>
+                                    <label class="legend-switch" aria-label="Durchschnitt anzeigen">
+                                        <input class="legend-switch-input" type="checkbox" data-tier-toggle="3" checked>
+                                        <span class="legend-switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </span>
                             </li>
-                            <li class="legend-item">
+                            <li class="legend-item" data-tier-row="4">
                                 <span class="legend-left">
                                     <span class="legend-dot" style="background:#F97316"></span>
                                     <span>Eher teuer</span>
                                 </span>
-                                <span class="legend-count" data-tier-count="4">0</span>
+                                <span class="legend-right">
+                                    <span class="legend-count" data-tier-count="4">0</span>
+                                    <label class="legend-switch" aria-label="Eher teuer anzeigen">
+                                        <input class="legend-switch-input" type="checkbox" data-tier-toggle="4" checked>
+                                        <span class="legend-switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </span>
                             </li>
-                            <li class="legend-item">
+                            <li class="legend-item" data-tier-row="5">
                                 <span class="legend-left">
                                     <span class="legend-dot" style="background:#DC2626"></span>
                                     <span>Sehr teuer</span>
                                 </span>
-                                <span class="legend-count" data-tier-count="5">0</span>
+                                <span class="legend-right">
+                                    <span class="legend-count" data-tier-count="5">0</span>
+                                    <label class="legend-switch" aria-label="Sehr teuer anzeigen">
+                                        <input class="legend-switch-input" type="checkbox" data-tier-toggle="5" checked>
+                                        <span class="legend-switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </span>
                             </li>
                         </ul>
                     </div>
