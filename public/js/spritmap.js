@@ -65,7 +65,12 @@ if (mapElement && typeof window.L !== 'undefined') {
     const legendCardElement = document.querySelector('[data-legend]');
     const legendToggleElement = document.querySelector('[data-legend-toggle]');
     const legendContentElement = document.querySelector('[data-legend-content]');
+    const mobileFilterCardElement = document.querySelector('[data-mobile-filter-card]');
+    const mobileFilterToggleElement = document.querySelector('[data-mobile-filter-toggle]');
+    const mobileFilterPanelElement = document.querySelector('[data-mobile-filter-panel]');
+    const mobileFilterSummaryElement = document.querySelector('[data-mobile-filter-summary]');
     const stationCountFormatter = new Intl.NumberFormat('de-AT');
+    let mobileFilterCollapsed = true;
 
     const map = window.L.map(mapElement, {
         zoomControl: false,
@@ -218,6 +223,38 @@ if (mapElement && typeof window.L !== 'undefined') {
         if (legendContentElement) {
             legendContentElement.setAttribute('aria-hidden', String(collapsed));
         }
+    };
+
+    const setMobileFilterCollapsed = (isCollapsed) => {
+        if (!mobileFilterCardElement) {
+            return;
+        }
+
+        mobileFilterCollapsed = Boolean(isCollapsed);
+
+        const isCollapsibleViewport = window.innerWidth <= 820;
+        const collapsed = isCollapsibleViewport ? mobileFilterCollapsed : false;
+
+        mobileFilterCardElement.classList.toggle('is-collapsed', collapsed);
+
+        if (mobileFilterToggleElement) {
+            mobileFilterToggleElement.setAttribute('aria-expanded', String(!collapsed));
+        }
+
+        if (mobileFilterPanelElement) {
+            mobileFilterPanelElement.setAttribute('aria-hidden', String(collapsed));
+        }
+    };
+
+    const updateMobileFilterSummary = () => {
+        if (!mobileFilterSummaryElement) {
+            return;
+        }
+
+        const fuelLabel = currentFuel === 'SUP' ? 'Super 95' : 'Diesel';
+        const scopeLabel = currentCompareScope === 'austria' ? 'Ganz AT' : 'Ansicht';
+
+        mobileFilterSummaryElement.textContent = `${fuelLabel} · ${scopeLabel}`;
     };
 
     const updateMetaBar = (payload = null) => {
@@ -380,8 +417,10 @@ if (mapElement && typeof window.L !== 'undefined') {
 
         const isMobileViewport = window.innerWidth <= 820;
         const popupMaxWidth = Math.min(280, window.innerWidth - 48);
-        // On mobile the filter bar sits at the bottom (~150px); push autoPan padding up so popups stay visible above it.
-        const autoPanBottom = isMobileViewport ? 160 : 24;
+        // On mobile the control banner is at the top; keep extra top padding while
+        // letting the bottom stay mostly free so popups can use vertical space.
+        const autoPanTop = isMobileViewport ? 170 : 88;
+        const autoPanBottom = isMobileViewport ? 28 : 24;
 
         safeStations.forEach((station) => {
             const lat = Number.parseFloat(station.latitude);
@@ -407,7 +446,7 @@ if (mapElement && typeof window.L !== 'undefined') {
                 maxWidth: popupMaxWidth,
                 className: 'spritmap-popup',
                 autoPan: true,
-                autoPanPaddingTopLeft: window.L.point(16, 88),
+                autoPanPaddingTopLeft: window.L.point(16, autoPanTop),
                 autoPanPaddingBottomRight: window.L.point(64, autoPanBottom),
                 closeButton: true,
                 closeOnClick: true,
@@ -427,12 +466,15 @@ if (mapElement && typeof window.L !== 'undefined') {
             button.classList.toggle('is-active', isActive);
             button.setAttribute('aria-pressed', String(isActive));
         });
+
+        updateMobileFilterSummary();
     };
 
     const updateCompareScopeToggle = () => {
         const toggleButton = document.querySelector('[data-compare-scope-toggle]');
 
         if (!toggleButton) {
+            updateMobileFilterSummary();
             return;
         }
 
@@ -440,6 +482,7 @@ if (mapElement && typeof window.L !== 'undefined') {
         toggleButton.classList.toggle('is-active', currentCompareScope === 'austria');
         toggleButton.setAttribute('aria-pressed', String(currentCompareScope === 'austria'));
         toggleButton.textContent = compareScopeLabels[currentCompareScope] ?? compareScopeLabels.viewport;
+        updateMobileFilterSummary();
     };
 
     const getBoundsQuery = () => {
@@ -570,12 +613,22 @@ if (mapElement && typeof window.L !== 'undefined') {
         setLegendCollapsed(!collapsed);
     });
 
+    mobileFilterToggleElement?.addEventListener('click', () => {
+        const collapsed = mobileFilterCardElement?.classList.contains('is-collapsed') ?? true;
+        setMobileFilterCollapsed(!collapsed);
+    });
+
     document.querySelector('[data-retry-map]')?.addEventListener('click', () => {
         loadStations();
     });
 
+    window.addEventListener('resize', () => {
+        setMobileFilterCollapsed(mobileFilterCollapsed);
+    });
+
     updateFuelButtons();
     updateCompareScopeToggle();
+    setMobileFilterCollapsed(true);
     updateMetaBar();
     setLegendCollapsed(true);
 
@@ -594,4 +647,3 @@ if (mapElement && typeof window.L !== 'undefined') {
         loadStations();
     }
 }
-

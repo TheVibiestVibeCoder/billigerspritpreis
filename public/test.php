@@ -6,11 +6,17 @@ declare(strict_types=1);
  * Spritmap End-to-End Diagnostics
  *
  * Usage:
- * - Browser: http://127.0.0.1:8000/test.php
- * - JSON:    http://127.0.0.1:8000/test.php?format=json
+ * - CLI: php public/test.php
  *
- * Remove or protect this file in production environments.
+ * This script is intentionally CLI-only to avoid exposing diagnostics on the public web.
  */
+
+if (PHP_SAPI !== 'cli') {
+    http_response_code(404);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'Not Found';
+    exit;
+}
 
 $isCli = PHP_SAPI === 'cli';
 $jsonMode = $isCli || (isset($_GET['format']) && $_GET['format'] === 'json') || isset($_GET['json']);

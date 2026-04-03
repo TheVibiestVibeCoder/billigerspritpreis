@@ -23,6 +23,8 @@
             :root {
                 --safe-top: env(safe-area-inset-top, 0px);
                 --safe-bottom: env(safe-area-inset-bottom, 0px);
+                --top-card-top: calc(var(--safe-top) + 0.75rem);
+                --top-card-height: 64px;
                 --spritmap-surface: rgba(255, 255, 255, 0.90);
                 --spritmap-surface-strong: rgba(255, 255, 255, 0.96);
                 --spritmap-border: rgba(8, 50, 84, 0.13);
@@ -80,12 +82,17 @@
                 backdrop-filter: blur(10px) saturate(1.15);
             }
 
+            .mobile-top-banner {
+                position: static;
+            }
+
             .brand-card {
                 position: absolute;
-                top: calc(var(--safe-top) + 0.75rem);
+                top: var(--top-card-top);
                 left: 0.75rem;
                 z-index: 900;
-                padding: 0.5rem 0.68rem;
+                min-height: var(--top-card-height);
+                padding: 0.46rem 0.68rem;
                 max-width: min(10.5rem, calc(100vw - 11.5rem));
             }
 
@@ -101,9 +108,10 @@
 
             .meta-card {
                 position: absolute;
-                top: calc(var(--safe-top) + 0.9rem);
+                top: var(--top-card-top);
                 right: 0.9rem;
                 z-index: 900;
+                min-height: var(--top-card-height);
                 padding: 0.45rem 0.72rem;
                 display: inline-flex;
                 align-items: center;
@@ -127,30 +135,61 @@
 
             .filter-card {
                 position: absolute;
-                top: calc(var(--safe-top) + 0.9rem);
+                top: var(--top-card-top);
                 left: 50%;
                 transform: translateX(-50%);
                 z-index: 900;
-                padding: 0.45rem;
+                min-height: var(--top-card-height);
+                padding: 0.34rem;
                 width: min(41rem, calc(100vw - 22rem));
                 min-width: 23rem;
+                display: flex;
+                align-items: center;
+            }
+
+            .mobile-filter-toggle {
+                display: none;
+            }
+
+            .mobile-filter-panel {
+                display: flex;
+                flex: 1 1 auto;
+                width: 100%;
+                min-width: 0;
+                height: auto;
+                align-items: center;
+            }
+
+            .mobile-filter-panel-inner {
+                overflow: visible;
+                width: 100%;
+                height: auto;
             }
 
             .filter-toolbar {
-                display: flex;
+                --filter-gap: 0.45rem;
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
                 align-items: center;
-                gap: 0.45rem;
+                gap: var(--filter-gap);
+                width: 100%;
+                height: auto;
             }
 
             .fuel-filter {
-                display: flex;
-                gap: 0.4rem;
-                flex: 1;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-column: 1 / span 2;
+                gap: var(--filter-gap);
+                min-width: 0;
+                align-items: center;
+                height: auto;
             }
 
             .fuel-button,
             .scope-toggle {
-                min-height: 44px;
+                min-height: 48px;
+                height: auto;
                 border: 0;
                 border-radius: 11px;
                 font-size: 0.92rem;
@@ -162,16 +201,22 @@
                 transition: transform 160ms ease, background-color 160ms ease, color 160ms ease;
                 color: #09243a;
                 background: rgba(235, 243, 249, 0.95);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
             }
 
             .fuel-button {
-                flex: 1;
-                padding: 0.56rem 0.65rem;
+                flex: none;
+                width: 100%;
+                padding: 0.58rem 0.65rem;
             }
 
             .scope-toggle {
-                min-width: 12.3rem;
-                padding: 0.56rem 0.78rem;
+                grid-column: 3;
+                width: 100%;
+                min-width: 0;
+                padding: 0.58rem 0.78rem;
                 background: rgba(196, 229, 251, 0.88);
                 white-space: nowrap;
             }
@@ -196,6 +241,7 @@
 
             .fuel-button:focus-visible,
             .scope-toggle:focus-visible,
+            .mobile-filter-toggle:focus-visible,
             .legend-toggle:focus-visible,
             .popup-route:focus-visible,
             .state-card button:focus-visible {
@@ -356,6 +402,26 @@
 
             .leaflet-control-zoom a:hover {
                 background: #e8f3fc;
+            }
+
+            .leaflet-control-attribution {
+                background: rgba(255, 255, 255, 0.5) !important;
+                border-radius: 9px 0 0 0;
+                padding: 0.08rem 0.34rem !important;
+                font-size: 0.6rem;
+                line-height: 1.2;
+                color: #5a7384 !important;
+                opacity: 0.72;
+                transition: opacity 160ms ease, background-color 160ms ease;
+            }
+
+            .leaflet-control-attribution:hover {
+                opacity: 1;
+                background: rgba(255, 255, 255, 0.72) !important;
+            }
+
+            .leaflet-control-attribution a {
+                color: #4a6f89 !important;
             }
 
             .leaflet-top.leaflet-right {
@@ -745,6 +811,7 @@
                 display: flex;
                 flex-direction: column;
                 align-items: flex-start;
+                justify-content: center;
                 gap: 0.15rem;
             }
 
@@ -879,6 +946,9 @@
                 .legend-content,
                 .legend-list,
                 .legend-chevron,
+                .mobile-filter-panel,
+                .mobile-filter-panel-inner,
+                .mobile-filter-toggle-chevron,
                 .spritmap-popup .leaflet-popup-content-wrapper,
                 .leaflet-interactive.marker-pop {
                     transition: none;
@@ -895,57 +965,204 @@
             }
 
             @media (max-width: 820px) {
-                .brand-card,
-                .filter-card,
-                .legend-card,
-                .meta-card {
-                    box-shadow: 0 14px 30px rgba(8, 32, 50, 0.18);
-                }
-
-                .brand-card {
+                .mobile-top-banner {
+                    position: absolute;
                     top: calc(var(--safe-top) + 0.4rem);
                     left: 0.5rem;
-                    max-width: calc(100vw - 9.6rem);
-                    padding: 0.44rem 0.58rem;
+                    right: 0.5rem;
+                    z-index: 905;
+                    display: grid;
+                    grid-template-columns: minmax(0, 1fr) auto;
+                    align-items: start;
+                    gap: 0.45rem 0.58rem;
+                    padding: 0.5rem 0.58rem 0.56rem;
+                    background: var(--spritmap-surface-strong);
+                    border: 1px solid var(--spritmap-border);
+                    border-radius: 16px;
+                    box-shadow: 0 14px 30px rgba(8, 32, 50, 0.2);
+                    backdrop-filter: blur(10px) saturate(1.15);
                 }
 
-                .meta-card {
-                    top: calc(var(--safe-top) + 0.45rem);
-                    right: 0.5rem;
-                    padding: 0.42rem 0.56rem;
+                .mobile-top-banner .brand-card,
+                .mobile-top-banner .meta-card,
+                .mobile-top-banner .filter-card {
+                    position: static;
+                    top: auto;
+                    right: auto;
+                    left: auto;
+                    transform: none;
+                    z-index: auto;
+                    width: auto;
+                    min-width: 0;
+                    max-width: none;
+                    min-height: 0;
+                    height: auto;
+                    margin: 0;
+                    padding: 0;
+                    background: transparent;
+                    border: 0;
+                    border-radius: 0;
+                    box-shadow: none;
+                    backdrop-filter: none;
+                }
+
+                .mobile-top-banner .brand-card {
+                    align-self: center;
+                }
+
+                .mobile-top-banner .brand-title {
+                    font-size: 0.9rem;
+                }
+
+                .mobile-top-banner .meta-card {
+                    justify-self: end;
+                    align-self: center;
                     font-size: 0.7rem;
                     gap: 0.28rem;
+                    white-space: nowrap;
                 }
 
-                .filter-card {
-                    top: auto;
-                    bottom: calc(var(--safe-bottom) + 0.5rem);
-                    left: 0.5rem;
-                    right: 0.5rem;
-                    transform: none;
-                    width: auto;
-                    padding: 0.42rem;
+                .mobile-top-banner .filter-card {
+                    grid-column: 1 / -1;
+                    display: block;
                 }
 
-                .filter-toolbar {
+                .mobile-top-banner .mobile-filter-toggle {
+                    width: 100%;
+                    border: 0;
+                    border-radius: 11px;
+                    min-height: 44px;
+                    padding: 0.44rem 0.56rem;
+                    background: rgba(213, 232, 247, 0.88);
+                    color: #0a344f;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 0.52rem;
+                    cursor: pointer;
+                    touch-action: manipulation;
+                    -webkit-tap-highlight-color: transparent;
+                    transition: background-color 200ms ease, transform 200ms ease;
+                }
+
+                .mobile-top-banner .mobile-filter-toggle:hover {
+                    background: #d4ebfa;
+                    transform: translateY(-1px);
+                }
+
+                .mobile-filter-toggle-text {
+                    display: grid;
+                    gap: 0.05rem;
+                    min-width: 0;
+                    text-align: left;
+                }
+
+                .mobile-filter-toggle-title {
+                    font-size: 0.7rem;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    font-weight: 800;
+                    color: #256185;
+                }
+
+                .mobile-filter-toggle-summary {
+                    font-size: 0.8rem;
+                    font-weight: 700;
+                    color: #0a344f;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .mobile-filter-toggle-chevron {
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 999px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #0f4f69;
+                    background: rgba(14, 165, 233, 0.18);
+                    flex-shrink: 0;
+                    transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1), background-color 180ms ease;
+                }
+
+                .mobile-filter-toggle-chevron svg {
+                    width: 12px;
+                    height: 12px;
+                    fill: currentColor;
+                }
+
+                .mobile-top-banner .mobile-filter-panel {
+                    display: grid;
+                    grid-template-rows: 1fr;
+                    opacity: 1;
+                    transition: grid-template-rows 360ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease;
+                    height: auto;
+                    overflow: hidden;
+                }
+
+                .mobile-top-banner .mobile-filter-panel-inner {
+                    overflow: hidden;
+                    padding-top: 0.4rem;
+                    transition: padding-top 240ms ease, transform 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease;
+                    transform: translateY(0);
+                    height: auto;
+                    opacity: 1;
+                }
+
+                .mobile-top-banner .filter-card.is-collapsed .mobile-filter-toggle-chevron {
+                    transform: rotate(-90deg);
+                    background: rgba(148, 163, 184, 0.24);
+                }
+
+                .mobile-top-banner .filter-card.is-collapsed .mobile-filter-panel {
+                    grid-template-rows: 0fr;
+                    opacity: 0;
+                    pointer-events: none;
+                }
+
+                .mobile-top-banner .filter-card.is-collapsed .mobile-filter-panel-inner {
+                    padding-top: 0;
+                    transform: translateY(-0.24rem);
+                    opacity: 0;
+                }
+
+                .mobile-top-banner .filter-toolbar {
+                    display: flex;
                     flex-direction: column;
                     gap: 0.42rem;
                 }
 
-                .fuel-button,
-                .scope-toggle {
-                    min-height: 48px;
-                    font-size: 0.93rem;
+                .mobile-top-banner .fuel-filter {
+                    display: flex;
+                    gap: 0.42rem;
+                    width: 100%;
+                    align-items: stretch;
                 }
 
-                .scope-toggle {
+                .mobile-top-banner .fuel-button,
+                .mobile-top-banner .scope-toggle {
+                    height: auto;
+                    min-height: 46px;
+                    font-size: 0.92rem;
+                }
+
+                .mobile-top-banner .scope-toggle {
                     width: 100%;
                     min-width: 0;
                     white-space: normal;
                 }
 
+                .mobile-top-banner .fuel-button {
+                    flex: 1 1 0;
+                    width: auto;
+                    min-width: 0;
+                    justify-content: center;
+                }
+
                 .legend-card {
-                    bottom: calc(var(--safe-bottom) + 9.2rem);
+                    bottom: calc(var(--safe-bottom) + 0.6rem);
                     left: 0.5rem;
                     width: min(16rem, calc(100vw - 1rem));
                     padding: 0.65rem 0.72rem;
@@ -966,7 +1183,7 @@
 
                 .map-state {
                     justify-content: flex-start;
-                    padding-top: calc(var(--safe-top) + 4.6rem);
+                    padding-top: calc(var(--safe-top) + 8rem);
                 }
 
                 .state-card {
@@ -979,19 +1196,36 @@
             }
 
             @media (max-width: 560px) {
-                .brand-title {
-                    font-size: 0.88rem;
+                .mobile-top-banner {
+                    left: 0.45rem;
+                    right: 0.45rem;
+                    padding: 0.46rem 0.5rem 0.52rem;
+                    gap: 0.38rem 0.48rem;
                 }
 
-                .meta-card {
-                    top: calc(var(--safe-top) + 3.35rem);
-                    right: 0.5rem;
+                .mobile-top-banner .brand-title {
+                    font-size: 0.86rem;
+                }
+
+                .mobile-top-banner .meta-card {
+                    font-size: 0.66rem;
+                    gap: 0.2rem;
+                }
+
+                .mobile-filter-toggle-summary {
+                    font-size: 0.75rem;
+                }
+
+                .leaflet-control-attribution {
+                    font-size: 0.56rem;
+                    padding: 0.04rem 0.28rem !important;
+                    background: rgba(255, 255, 255, 0.42) !important;
                 }
 
                 .legend-card {
                     left: 0.5rem;
                     right: 0.5rem;
-                    bottom: calc(var(--safe-bottom) + 12.7rem);
+                    bottom: calc(var(--safe-bottom) + 0.52rem);
                     width: auto;
                 }
 
@@ -1007,19 +1241,13 @@
             }
 
             @media (max-width: 400px) {
-                .brand-card {
-                    max-width: calc(100vw - 8rem);
-                }
-
-                .meta-card {
-                    font-size: 0.64rem;
-                    gap: 0.2rem;
-                    padding: 0.36rem 0.44rem;
-                }
-
-                .filter-card {
+                .mobile-top-banner {
                     left: 0.35rem;
                     right: 0.35rem;
+                }
+
+                .mobile-top-banner .meta-card {
+                    font-size: 0.62rem;
                 }
 
                 .legend-card {
@@ -1042,12 +1270,52 @@
                 data-initial-compare-scope="{{ $initialCompareScope }}"
             ></div>
 
-            <section class="ui-card brand-card">
-                <div class="brand-top">
-                    <h1 class="brand-title">spritmap.at</h1>
-                    <button class="info-btn" type="button" aria-label="Info" onclick="document.getElementById('info-overlay').classList.remove('hidden')">i</button>
-                </div>
-                <span class="brand-updated" id="brand-updated" aria-live="polite"></span>
+            <section class="mobile-top-banner">
+                <section class="ui-card brand-card">
+                    <div class="brand-top">
+                        <h1 class="brand-title">spritmap.at</h1>
+                        <button class="info-btn" type="button" aria-label="Info" onclick="document.getElementById('info-overlay').classList.remove('hidden')">i</button>
+                    </div>
+                    <span class="brand-updated" id="brand-updated" aria-live="polite"></span>
+                </section>
+
+                <section id="map-meta" class="ui-card meta-card" aria-live="polite">
+                    <span>Stationen</span>
+                    <span id="map-meta-count" class="meta-value">-</span>
+                    <span class="meta-divider">|</span>
+                    <span id="map-meta-scope" class="meta-value">Ansicht</span>
+                </section>
+
+                <section class="ui-card filter-card" aria-label="Kraftstofffilter" data-mobile-filter-card>
+                    <button
+                        type="button"
+                        class="mobile-filter-toggle"
+                        data-mobile-filter-toggle
+                        aria-expanded="true"
+                        aria-controls="mobile-filter-panel"
+                    >
+                        <span class="mobile-filter-toggle-text">
+                            <span class="mobile-filter-toggle-title">Filter</span>
+                            <span class="mobile-filter-toggle-summary" data-mobile-filter-summary>Diesel · Ansicht</span>
+                        </span>
+                        <span class="mobile-filter-toggle-chevron" aria-hidden="true">
+                            <svg viewBox="0 0 20 20">
+                                <path d="M5.6 7.1 10 11.5l4.4-4.4 1.2 1.2-5.6 5.6-5.6-5.6z" />
+                            </svg>
+                        </span>
+                    </button>
+
+                    <div
+                        id="mobile-filter-panel"
+                        class="mobile-filter-panel"
+                        data-mobile-filter-panel
+                        aria-hidden="false"
+                    >
+                        <div class="mobile-filter-panel-inner">
+                            <x-fuel-filter :fuel="$initialFuel" :compare-scope="$initialCompareScope" />
+                        </div>
+                    </div>
+                </section>
             </section>
 
             <div id="info-overlay" class="info-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
@@ -1061,17 +1329,6 @@
                     <p class="info-note">⚠️ Dies ist eine Testversion. Es kann zu Fehlern oder veralteten Daten kommen.</p>
                 </div>
             </div>
-
-            <section id="map-meta" class="ui-card meta-card" aria-live="polite">
-                <span>Stationen</span>
-                <span id="map-meta-count" class="meta-value">-</span>
-                <span class="meta-divider">|</span>
-                <span id="map-meta-scope" class="meta-value">Ansicht</span>
-            </section>
-
-            <section class="ui-card filter-card" aria-label="Kraftstofffilter">
-                <x-fuel-filter :fuel="$initialFuel" :compare-scope="$initialCompareScope" />
-            </section>
 
             <section class="ui-card legend-card is-collapsed" aria-label="Preislegende" data-legend>
                 <button
@@ -1157,4 +1414,3 @@
         </main>
     </body>
 </html>
-
