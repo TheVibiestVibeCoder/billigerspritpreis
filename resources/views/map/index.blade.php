@@ -743,8 +743,28 @@
 
             .brand-card {
                 display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.15rem;
+            }
+
+            .brand-top {
+                display: flex;
                 align-items: center;
                 gap: 0.4rem;
+            }
+
+            .brand-updated {
+                font-size: 0.6rem;
+                color: var(--spritmap-text-subtle);
+                letter-spacing: 0.01em;
+                line-height: 1;
+                opacity: 0;
+                transition: opacity 400ms ease;
+            }
+
+            .brand-updated.is-visible {
+                opacity: 1;
             }
 
             .info-btn {
@@ -1023,8 +1043,11 @@
             ></div>
 
             <section class="ui-card brand-card">
-                <h1 class="brand-title">spritmap.at</h1>
-                <button class="info-btn" type="button" aria-label="Info" onclick="document.getElementById('info-overlay').classList.remove('hidden')">i</button>
+                <div class="brand-top">
+                    <h1 class="brand-title">spritmap.at</h1>
+                    <button class="info-btn" type="button" aria-label="Info" onclick="document.getElementById('info-overlay').classList.remove('hidden')">i</button>
+                </div>
+                <span class="brand-updated" id="brand-updated" aria-live="polite"></span>
             </section>
 
             <div id="info-overlay" class="info-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">

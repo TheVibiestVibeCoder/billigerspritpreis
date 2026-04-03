@@ -58,6 +58,7 @@ if (mapElement && typeof window.L !== 'undefined') {
     const loadingElement = document.getElementById('map-loading');
     const emptyElement = document.getElementById('map-empty');
     const errorElement = globalErrorElement;
+    const brandUpdatedElement = document.getElementById('brand-updated');
     const metaCardElement = document.getElementById('map-meta');
     const metaCountElement = document.getElementById('map-meta-count');
     const metaScopeElement = document.getElementById('map-meta-scope');
@@ -230,6 +231,18 @@ if (mapElement && typeof window.L !== 'undefined') {
 
         if (metaScopeElement) {
             metaScopeElement.textContent = compareScopeMetaLabels[scope] ?? compareScopeMetaLabels.viewport;
+        }
+
+        if (brandUpdatedElement) {
+            const raw = payload?.meta?.generated_at ?? null;
+            if (raw) {
+                const date = new Date(raw);
+                if (!Number.isNaN(date.getTime())) {
+                    const hhmm = date.toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' });
+                    brandUpdatedElement.textContent = `aktualisiert ${hhmm}`;
+                    brandUpdatedElement.classList.add('is-visible');
+                }
+            }
         }
     };
 
