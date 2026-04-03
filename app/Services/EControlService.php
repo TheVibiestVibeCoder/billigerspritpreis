@@ -49,31 +49,34 @@ class EControlService
 
         $payload = Cache::get($cacheKey);
 
-        if (! is_array($payload)) {
-            if ($payload !== null) {
-                Cache::forget($cacheKey);
-            }
-
-            $payload = Cache::remember($cacheKey, now()->addSeconds($ttl), function () use ($fuel, $includeClosed) {
-                $regions = $this->getRegions();
-
-                if ($regions->isEmpty()) {
-                    $stations = $this->normalizeStations($this->fallbackByAddress($fuel, $includeClosed));
-                } else {
-                    $stations = $this->fetchByRegion($regions, $fuel, $includeClosed);
-                }
-
-                $stations = $this->hydrateSelectedPrice($stations, $fuel)
-                    ->filter(fn (array $station) => is_numeric($station['price'] ?? null))
-                    ->values();
-
-                $this->persistStations($stations, $fuel);
-
-                return $stations->all();
-            });
+        // Only treat non-empty arrays as valid cached data — an empty array means a previous
+        // fetch failed and we must not serve stale zeros or block retries for the full TTL.
+        if (is_array($payload) && count($payload) > 0) {
+            return collect($payload);
         }
 
-        return collect($payload);
+        if ($payload !== null) {
+            Cache::forget($cacheKey);
+        }
+
+        $regions = $this->getRegions();
+
+        $stations = $regions->isEmpty()
+            ? $this->normalizeStations($this->fallbackByAddress($fuel, $includeClosed))
+            : $this->fetchByRegion($regions, $fuel, $includeClosed);
+
+        $stations = $this->hydrateSelectedPrice($stations, $fuel)
+            ->filter(fn (array $station) => is_numeric($station['price'] ?? null))
+            ->values();
+
+        $this->persistStations($stations, $fuel);
+
+        // Only persist to cache when we actually have data; empty results must not be cached.
+        if ($stations->isNotEmpty()) {
+            Cache::put($cacheKey, $stations->all(), now()->addSeconds($ttl));
+        }
+
+        return $stations;
     }
 
     private function getRegions(): Collection
@@ -158,29 +161,41 @@ class EControlService
         }
 
         $stations = collect();
+        // Sending all ~94 regions in a single pool exhausts the OS getaddrinfo thread pool on
+        // constrained hosts (shared hosting / LiteSpeed). Chunk into small batches so at most
+        // this many DNS lookups happen concurrently. 10 is conservative and safe.
+        $poolBatchSize = 10;
 
         foreach ($this->candidateBaseUrls() as $baseUrl) {
             $hadSuccessfulResponse = false;
             $endpoint = rtrim($baseUrl, '/').'/search/gas-stations/by-region';
             $timeout = (int) config('services.econtrol.timeout', 15);
 
-            $responses = Http::pool(function (Pool $pool) use ($regions, $fuel, $includeClosed, $endpoint, $timeout) {
-                $requests = [];
+            $responses = [];
 
-                foreach ($regions as $region) {
-                    $requests[] = $pool->as((string) $region['code'])
-                        ->acceptJson()
-                        ->timeout($timeout)
-                        ->get($endpoint, [
-                            'code' => $region['code'],
-                            'type' => strtoupper((string) ($region['type'] ?? 'PB')),
-                            'fuelType' => $fuel,
-                            'includeClosed' => $includeClosed ? 'true' : 'false',
-                        ]);
+            foreach ($regions->chunk($poolBatchSize) as $chunk) {
+                $batchResponses = Http::pool(function (Pool $pool) use ($chunk, $fuel, $includeClosed, $endpoint, $timeout) {
+                    $requests = [];
+
+                    foreach ($chunk as $region) {
+                        $requests[] = $pool->as((string) $region['code'])
+                            ->acceptJson()
+                            ->timeout($timeout)
+                            ->get($endpoint, [
+                                'code' => $region['code'],
+                                'type' => strtoupper((string) ($region['type'] ?? 'PB')),
+                                'fuelType' => $fuel,
+                                'includeClosed' => $includeClosed ? 'true' : 'false',
+                            ]);
+                    }
+
+                    return $requests;
+                });
+
+                if (is_array($batchResponses)) {
+                    $responses = array_merge($responses, $batchResponses);
                 }
-
-                return $requests;
-            });
+            }
 
             foreach ($responses as $regionCode => $response) {
                 if ($response instanceof \Throwable) {
