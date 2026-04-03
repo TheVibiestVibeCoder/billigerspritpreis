@@ -24,7 +24,7 @@
                 --safe-top: env(safe-area-inset-top, 0px);
                 --safe-bottom: env(safe-area-inset-bottom, 0px);
                 --top-card-top: calc(var(--safe-top) + 0.75rem);
-                --top-card-height: 58px;
+                --top-card-height: 64px;
                 --spritmap-surface: rgba(255, 255, 255, 0.90);
                 --spritmap-surface-strong: rgba(255, 255, 255, 0.96);
                 --spritmap-border: rgba(8, 50, 84, 0.13);
@@ -208,14 +208,14 @@
             .fuel-button {
                 flex: none;
                 width: 100%;
-                padding: 0.46rem 0.65rem;
+                padding: 0.58rem 0.65rem;
             }
 
             .scope-toggle {
                 grid-column: 3;
                 width: 100%;
                 min-width: 0;
-                padding: 0.46rem 0.78rem;
+                padding: 0.58rem 0.78rem;
                 background: rgba(196, 229, 251, 0.88);
                 white-space: nowrap;
             }
