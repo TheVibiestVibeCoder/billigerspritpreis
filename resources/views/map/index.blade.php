@@ -375,6 +375,26 @@
                 background: #e8f3fc;
             }
 
+            .leaflet-control-attribution {
+                background: rgba(255, 255, 255, 0.5) !important;
+                border-radius: 9px 0 0 0;
+                padding: 0.08rem 0.34rem !important;
+                font-size: 0.6rem;
+                line-height: 1.2;
+                color: #5a7384 !important;
+                opacity: 0.72;
+                transition: opacity 160ms ease, background-color 160ms ease;
+            }
+
+            .leaflet-control-attribution:hover {
+                opacity: 1;
+                background: rgba(255, 255, 255, 0.72) !important;
+            }
+
+            .leaflet-control-attribution a {
+                color: #4a6f89 !important;
+            }
+
             .leaflet-top.leaflet-right {
                 top: 50%;
                 transform: translateY(-50%);
@@ -1139,6 +1159,12 @@
 
                 .mobile-filter-toggle-summary {
                     font-size: 0.75rem;
+                }
+
+                .leaflet-control-attribution {
+                    font-size: 0.56rem;
+                    padding: 0.04rem 0.28rem !important;
+                    background: rgba(255, 255, 255, 0.42) !important;
                 }
 
                 .legend-card {
