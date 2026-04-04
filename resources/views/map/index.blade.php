@@ -1877,7 +1877,7 @@
             <section class="ui-card range-card" aria-label="Preisverteilung im Ausschnitt" data-price-range>
                 <div class="range-card-header">
                     <p class="range-card-title">Preise im Ausschnitt</p>
-                    <span class="range-card-caption" data-range-scope>Ansicht-Vergleich</span>
+                    <span class="range-card-caption" data-range-scope>AT-Vergleich</span>
                 </div>
 
                 <div class="range-card-scale">
