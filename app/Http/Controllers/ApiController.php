@@ -97,35 +97,13 @@ class ApiController extends Controller
         bool $includeClosed,
         int $ttl,
     ): array {
-        $cacheKey = sprintf('stations:austria_colored:%s:%s:v1', $fuel, $includeClosed ? '1' : '0');
-
-        $coloredAll = Cache::get($cacheKey);
-
-        if (! is_array($coloredAll) || count($coloredAll) === 0) {
-            Cache::forget($cacheKey);
-
-            $allStations = $eControlService
-                ->getStationsForBounds($this->defaultBounds(), $fuel, $includeClosed)
-                ->map(fn (array $s) => $this->mapStationPayload($s, $fuel))
-                ->values();
-
-            if ($allStations->isNotEmpty()) {
-                $tieredById = $priceColorService->applyTiers($allStations, 'price')->keyBy('id');
-
-                $coloredAll = $allStations->map(function (array $station) use ($tieredById): array {
-                    $tiered = $tieredById->get($station['id']);
-                    $station['price_tier'] = $tiered['price_tier'] ?? 3;
-                    $station['price_color'] = $tiered['price_color'] ?? '#EAB308';
-                    $station['cheaper_than_percent'] = $tiered['cheaper_than_percent'] ?? null;
-
-                    return $station;
-                })->values()->all();
-
-                Cache::put($cacheKey, $coloredAll, now()->addSeconds($ttl));
-            } else {
-                $coloredAll = [];
-            }
-        }
+        $coloredAll = $this->getAustriaColoredStations(
+            $eControlService,
+            $priceColorService,
+            $fuel,
+            $includeClosed,
+            $ttl,
+        );
 
         // Filter to the visible viewport entirely in-memory — no extra DB or cache hit.
         $visible = array_values(array_filter(
@@ -149,6 +127,9 @@ class ApiController extends Controller
                 'comparison_count' => count($coloredAll),
                 'comparison_min_price' => $comparisonRange['min'],
                 'comparison_max_price' => $comparisonRange['max'],
+                'scale_scope' => 'austria',
+                'scale_min_price' => $comparisonRange['min'],
+                'scale_max_price' => $comparisonRange['max'],
             ],
         ];
     }
@@ -166,7 +147,7 @@ class ApiController extends Controller
         int $ttl,
     ): array {
         $cacheKey = sprintf(
-            'stations:processed:%s:%s:%s:%0.3f:%0.3f:%0.3f:%0.3f:v2',
+            'stations:processed:%s:%s:%s:%0.3f:%0.3f:%0.3f:%0.3f:v3',
             $fuel,
             'viewport',
             $includeClosed ? '1' : '0',
@@ -209,6 +190,13 @@ class ApiController extends Controller
                 return $station;
             })->values()->all();
             $comparisonRange = $this->extractPriceRange($stations);
+            $scaleRange = $this->extractPriceRange($this->getAustriaColoredStations(
+                $eControlService,
+                $priceColorService,
+                $fuel,
+                $includeClosed,
+                $ttl,
+            ));
 
             $payload = [
                 'fuel' => $fuel,
@@ -222,6 +210,9 @@ class ApiController extends Controller
                     'comparison_count' => count($stations),
                     'comparison_min_price' => $comparisonRange['min'],
                     'comparison_max_price' => $comparisonRange['max'],
+                    'scale_scope' => 'austria',
+                    'scale_min_price' => $scaleRange['min'],
+                    'scale_max_price' => $scaleRange['max'],
                 ],
             ];
 
@@ -231,6 +222,46 @@ class ApiController extends Controller
         }
 
         return $payload;
+    }
+
+    private function getAustriaColoredStations(
+        EControlService $eControlService,
+        PriceColorService $priceColorService,
+        string $fuel,
+        bool $includeClosed,
+        int $ttl,
+    ): array {
+        $cacheKey = sprintf('stations:austria_colored:%s:%s:v1', $fuel, $includeClosed ? '1' : '0');
+
+        $coloredAll = Cache::get($cacheKey);
+
+        if (! is_array($coloredAll) || count($coloredAll) === 0) {
+            Cache::forget($cacheKey);
+
+            $allStations = $eControlService
+                ->getStationsForBounds($this->defaultBounds(), $fuel, $includeClosed)
+                ->map(fn (array $s) => $this->mapStationPayload($s, $fuel))
+                ->values();
+
+            if ($allStations->isEmpty()) {
+                return [];
+            }
+
+            $tieredById = $priceColorService->applyTiers($allStations, 'price')->keyBy('id');
+
+            $coloredAll = $allStations->map(function (array $station) use ($tieredById): array {
+                $tiered = $tieredById->get($station['id']);
+                $station['price_tier'] = $tiered['price_tier'] ?? 3;
+                $station['price_color'] = $tiered['price_color'] ?? '#EAB308';
+                $station['cheaper_than_percent'] = $tiered['cheaper_than_percent'] ?? null;
+
+                return $station;
+            })->values()->all();
+
+            Cache::put($cacheKey, $coloredAll, now()->addSeconds($ttl));
+        }
+
+        return $coloredAll;
     }
 
     private function extractPriceRange(array $stations): array

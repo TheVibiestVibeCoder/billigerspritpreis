@@ -61,7 +61,7 @@ if (mapElement && typeof window.L !== 'undefined') {
     let bottomOverlaySyncTimeout = null;
     let tierFilterAnimationTimeout = null;
     let latestComparisonRange = {
-        scope: currentCompareScope,
+        scope: 'austria',
         min: null,
         max: null,
     };
@@ -93,10 +93,7 @@ if (mapElement && typeof window.L !== 'undefined') {
         minimumFractionDigits: 3,
         maximumFractionDigits: 3,
     });
-    const rangeScopeLabels = {
-        viewport: 'Ansicht-Vergleich',
-        austria: 'AT-Vergleich',
-    };
+    const rangeScopeLabel = 'AT-Vergleich';
     const tierFilterAnimationMs = 180;
     const maxAnimatedTierFilterStations = 120;
     const maxAnimatedTierFilterElements = 280;
@@ -426,7 +423,7 @@ if (mapElement && typeof window.L !== 'undefined') {
             return;
         }
 
-        rangeScopeElement.textContent = rangeScopeLabels[currentCompareScope] ?? rangeScopeLabels.viewport;
+        rangeScopeElement.textContent = rangeScopeLabel;
         syncBottomOverlayMeasurements();
         queueBottomOverlayMeasurements();
     };
@@ -485,9 +482,9 @@ if (mapElement && typeof window.L !== 'undefined') {
     };
 
     const updateComparisonRange = (payload = null) => {
-        const scope = normalizeCompareScope(payload?.meta?.comparison_scope ?? payload?.comparison_scope ?? currentCompareScope);
-        const min = Number.parseFloat(payload?.meta?.comparison_min_price);
-        const max = Number.parseFloat(payload?.meta?.comparison_max_price);
+        const scope = normalizeCompareScope(payload?.meta?.scale_scope ?? 'austria');
+        const min = Number.parseFloat(payload?.meta?.scale_min_price ?? payload?.meta?.comparison_min_price);
+        const max = Number.parseFloat(payload?.meta?.scale_max_price ?? payload?.meta?.comparison_max_price);
 
         latestComparisonRange = {
             scope,
@@ -754,8 +751,7 @@ if (mapElement && typeof window.L !== 'undefined') {
 
         const localMin = Math.min(...pricedStations.map(({ price }) => price));
         const localMax = Math.max(...pricedStations.map(({ price }) => price));
-        const useComparisonRange = currentCompareScope === 'austria'
-            && latestComparisonRange.scope === 'austria'
+        const useComparisonRange = latestComparisonRange.scope === 'austria'
             && Number.isFinite(latestComparisonRange.min)
             && Number.isFinite(latestComparisonRange.max)
             && latestComparisonRange.max >= latestComparisonRange.min;
