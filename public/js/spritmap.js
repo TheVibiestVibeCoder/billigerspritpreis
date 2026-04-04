@@ -14,6 +14,7 @@ if (mapElement && typeof window.L === 'undefined') {
 }
 
 if (mapElement && typeof window.L !== 'undefined') {
+    const documentElement = document.documentElement;
     const austriaBounds = window.L.latLngBounds(
         [46.32, 9.35],
         [49.10, 17.25],
@@ -56,6 +57,14 @@ if (mapElement && typeof window.L !== 'undefined') {
     let moveDebounceHandle = null;
     let activePopupStationId = null;
     let isRefreshingMarkers = false;
+    let bottomOverlaySyncFrame = null;
+    let bottomOverlaySyncTimeout = null;
+    let tierFilterAnimationTimeout = null;
+    let latestComparisonRange = {
+        scope: currentCompareScope,
+        min: null,
+        max: null,
+    };
 
     const loadingElement = document.getElementById('map-loading');
     const emptyElement = document.getElementById('map-empty');
@@ -73,7 +82,24 @@ if (mapElement && typeof window.L !== 'undefined') {
     const mobileFilterToggleElement = document.querySelector('[data-mobile-filter-toggle]');
     const mobileFilterPanelElement = document.querySelector('[data-mobile-filter-panel]');
     const mobileFilterSummaryElement = document.querySelector('[data-mobile-filter-summary]');
+    const rangeCardElement = document.querySelector('[data-price-range]');
+    const rangeScopeElement = document.querySelector('[data-range-scope]');
+    const rangeMinElement = document.querySelector('[data-range-min]');
+    const rangeMaxElement = document.querySelector('[data-range-max]');
+    const rangeDotsElement = document.querySelector('[data-range-dots]');
+    const rangeEmptyElement = document.querySelector('[data-range-empty]');
     const stationCountFormatter = new Intl.NumberFormat('de-AT');
+    const priceValueFormatter = new Intl.NumberFormat('de-AT', {
+        minimumFractionDigits: 3,
+        maximumFractionDigits: 3,
+    });
+    const rangeScopeLabels = {
+        viewport: 'Ansicht-Vergleich',
+        austria: 'AT-Vergleich',
+    };
+    const tierFilterAnimationMs = 180;
+    const maxAnimatedTierFilterStations = 120;
+    const maxAnimatedTierFilterElements = 280;
     let mobileFilterCollapsed = true;
     const tierFilterState = {
         1: true,
@@ -115,6 +141,7 @@ if (mapElement && typeof window.L !== 'undefined') {
 
     const markerLayer = window.L.layerGroup().addTo(map);
     const priceLabelLayer = window.L.layerGroup().addTo(map);
+    const markerByStationId = new Map();
 
     map.createPane('austriaBorderHaloPane');
     map.getPane('austriaBorderHaloPane').style.pointerEvents = 'none';
@@ -275,6 +302,72 @@ if (mapElement && typeof window.L !== 'undefined') {
         metaCardElement.classList.toggle('is-loading', Boolean(isLoading));
     };
 
+    const syncBottomOverlayMeasurements = () => {
+        if (!rangeCardElement) {
+            return;
+        }
+
+        const nextHeight = Math.max(72, Math.ceil(rangeCardElement.offsetHeight));
+        documentElement.style.setProperty('--range-card-height', `${nextHeight}px`);
+
+        const nextSpace = Math.max(96, Math.ceil(rangeCardElement.offsetHeight) + 18);
+        documentElement.style.setProperty('--range-card-space', `${nextSpace}px`);
+
+        if (!legendCardElement) {
+            return;
+        }
+
+        const isDesktopViewport = window.innerWidth > 820;
+        const legendIsCollapsed = legendCardElement.classList.contains('is-collapsed');
+
+        if (!isDesktopViewport || !legendIsCollapsed) {
+            legendCardElement.style.removeProperty('bottom');
+
+            return;
+        }
+
+        const rangeBottom = Number.parseFloat(window.getComputedStyle(rangeCardElement).bottom) || 0;
+        const alignedLegendBottom = rangeBottom + Math.max(0, rangeCardElement.offsetHeight - legendCardElement.offsetHeight);
+
+        legendCardElement.style.bottom = `${Math.round(alignedLegendBottom)}px`;
+    };
+
+    const queueBottomOverlayMeasurements = () => {
+        if (!rangeCardElement) {
+            return;
+        }
+
+        if (bottomOverlaySyncFrame !== null) {
+            window.cancelAnimationFrame(bottomOverlaySyncFrame);
+            bottomOverlaySyncFrame = null;
+        }
+
+        if (bottomOverlaySyncTimeout !== null) {
+            window.clearTimeout(bottomOverlaySyncTimeout);
+            bottomOverlaySyncTimeout = null;
+        }
+
+        bottomOverlaySyncFrame = window.requestAnimationFrame(() => {
+            bottomOverlaySyncFrame = window.requestAnimationFrame(() => {
+                bottomOverlaySyncFrame = null;
+                syncBottomOverlayMeasurements();
+            });
+        });
+
+        bottomOverlaySyncTimeout = window.setTimeout(() => {
+            bottomOverlaySyncTimeout = null;
+            syncBottomOverlayMeasurements();
+        }, 220);
+    };
+
+    const setRangeLoadingState = (isLoading) => {
+        if (!rangeCardElement) {
+            return;
+        }
+
+        rangeCardElement.classList.toggle('is-loading', Boolean(isLoading));
+    };
+
     const setLegendCollapsed = (isCollapsed) => {
         if (!legendCardElement) {
             return;
@@ -291,6 +384,9 @@ if (mapElement && typeof window.L !== 'undefined') {
         if (legendContentElement) {
             legendContentElement.setAttribute('aria-hidden', String(collapsed));
         }
+
+        syncBottomOverlayMeasurements();
+        queueBottomOverlayMeasurements();
     };
 
     const setMobileFilterCollapsed = (isCollapsed) => {
@@ -323,6 +419,16 @@ if (mapElement && typeof window.L !== 'undefined') {
         const scopeLabel = currentCompareScope === 'austria' ? 'Ganz AT' : 'Ansicht';
 
         mobileFilterSummaryElement.textContent = `${fuelLabel} · ${scopeLabel}`;
+    };
+
+    const updateRangeCardCaption = () => {
+        if (!rangeScopeElement) {
+            return;
+        }
+
+        rangeScopeElement.textContent = rangeScopeLabels[currentCompareScope] ?? rangeScopeLabels.viewport;
+        syncBottomOverlayMeasurements();
+        queueBottomOverlayMeasurements();
     };
 
     const updateMetaBar = (payload = null) => {
@@ -378,6 +484,110 @@ if (mapElement && typeof window.L !== 'undefined') {
         });
     };
 
+    const updateComparisonRange = (payload = null) => {
+        const scope = normalizeCompareScope(payload?.meta?.comparison_scope ?? payload?.comparison_scope ?? currentCompareScope);
+        const min = Number.parseFloat(payload?.meta?.comparison_min_price);
+        const max = Number.parseFloat(payload?.meta?.comparison_max_price);
+
+        latestComparisonRange = {
+            scope,
+            min: Number.isFinite(min) ? min : null,
+            max: Number.isFinite(max) ? max : null,
+        };
+    };
+
+    const shouldReduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const collectMarkerPaths = () => {
+        return markerLayer.getLayers()
+            .map((layer) => layer?._path)
+            .filter(Boolean);
+    };
+
+    const collectLabelElements = () => {
+        return priceLabelLayer.getLayers()
+            .map((layer) => layer?.getElement?.() ?? layer?._icon)
+            .filter(Boolean);
+    };
+
+    const collectRangeDotElements = () => {
+        if (!rangeDotsElement) {
+            return [];
+        }
+
+        return Array.from(rangeDotsElement.querySelectorAll('.range-card-dot'));
+    };
+
+    const animateElementsIn = (elements, className, duration = tierFilterAnimationMs + 60) => {
+        if (shouldReduceMotion() || elements.length === 0) {
+            return;
+        }
+
+        elements.forEach((element) => {
+            element.classList.remove('marker-exiting', 'label-exiting', 'dot-exiting');
+            element.classList.add(className);
+        });
+
+        window.setTimeout(() => {
+            elements.forEach((element) => {
+                element.classList.remove(className);
+            });
+        }, duration);
+    };
+
+    const shouldAnimateTierFilterTransition = () => {
+        if (shouldReduceMotion()) {
+            return false;
+        }
+
+        const nextVisibleCount = filterStationsByTier(latestStations).length;
+        const currentElementCount = collectMarkerPaths().length
+            + collectLabelElements().length
+            + collectRangeDotElements().length;
+        const nextElementEstimate = nextVisibleCount * (map.getZoom() >= 13 ? 3 : 2);
+
+        return nextVisibleCount <= maxAnimatedTierFilterStations
+            && Math.max(currentElementCount, nextElementEstimate) <= maxAnimatedTierFilterElements;
+    };
+
+    const animateTierFilterChange = () => {
+        if (tierFilterAnimationTimeout !== null) {
+            window.clearTimeout(tierFilterAnimationTimeout);
+            tierFilterAnimationTimeout = null;
+        }
+
+        if (!shouldAnimateTierFilterTransition()) {
+            renderStations(latestStations, { restorePopup: true, animateTransition: false });
+
+            return;
+        }
+
+        const markerElements = collectMarkerPaths();
+        const labelElements = collectLabelElements();
+        const rangeDotElements = collectRangeDotElements();
+        const hasElements = markerElements.length > 0 || labelElements.length > 0 || rangeDotElements.length > 0;
+
+        markerElements.forEach((element) => {
+            element.classList.remove('marker-entering');
+            element.classList.add('marker-exiting', 'marker-filterable');
+        });
+
+        labelElements.forEach((element) => {
+            element.classList.remove('label-entering');
+            element.classList.add('label-exiting');
+        });
+
+        rangeDotElements.forEach((element) => {
+            element.classList.remove('dot-entering');
+            element.classList.add('dot-exiting');
+        });
+
+        tierFilterAnimationTimeout = window.setTimeout(() => {
+            tierFilterAnimationTimeout = null;
+            renderStations(latestStations, { restorePopup: true, animateTransition: true });
+        }, hasElements ? tierFilterAnimationMs : 0);
+    };
+
     const sanitizeHtml = (value) => {
         return String(value ?? '')
             .replaceAll('&', '&amp;')
@@ -396,6 +606,239 @@ if (mapElement && typeof window.L !== 'undefined') {
         }
 
         return Number.isFinite(diesel) ? diesel : null;
+    };
+
+    const getRangeDotLayoutConfig = (count) => {
+        if (count < 25) {
+            return {
+                size: '1.05rem',
+                border: '3px',
+                minGapPx: 14,
+            };
+        }
+
+        if (count < 50) {
+            return {
+                size: '0.88rem',
+                border: '2px',
+                minGapPx: 10,
+            };
+        }
+
+        if (count < 100) {
+            return {
+                size: '0.74rem',
+                border: '2px',
+                minGapPx: 7,
+            };
+        }
+
+        return {
+            size: '0.74rem',
+            border: '2px',
+            minGapPx: 0,
+        };
+    };
+
+    const distributeRangeDotPositions = (idealPositions, trackWidth, minGapPx) => {
+        if (idealPositions.length <= 1 || minGapPx <= 0 || !Number.isFinite(trackWidth) || trackWidth <= 0) {
+            return idealPositions.map((position) => Math.max(0, Math.min(trackWidth, position)));
+        }
+
+        const positions = idealPositions.map((position) => Math.max(0, Math.min(trackWidth, position)));
+
+        for (let index = 1; index < positions.length; index += 1) {
+            positions[index] = Math.max(positions[index], positions[index - 1] + minGapPx);
+        }
+
+        if (positions[positions.length - 1] > trackWidth) {
+            positions[positions.length - 1] = trackWidth;
+
+            for (let index = positions.length - 2; index >= 0; index -= 1) {
+                positions[index] = Math.min(positions[index], positions[index + 1] - minGapPx);
+            }
+
+            if (positions[0] < 0) {
+                const shift = Math.abs(positions[0]);
+
+                for (let index = 0; index < positions.length; index += 1) {
+                    positions[index] += shift;
+                }
+
+                const overflow = positions[positions.length - 1] - trackWidth;
+
+                if (overflow > 0) {
+                    for (let index = 0; index < positions.length; index += 1) {
+                        positions[index] -= overflow;
+                    }
+                }
+            }
+        }
+
+        return positions.map((position) => Math.max(0, Math.min(trackWidth, position)));
+    };
+
+    const getFilteredPricedStations = (stations = latestStations) => {
+        return filterStationsByTier(Array.isArray(stations) ? stations : [])
+            .map((station) => ({
+                station,
+                price: resolveSelectedPrice(station),
+            }))
+            .filter(({ price }) => Number.isFinite(price));
+    };
+
+    const focusStationFromRangeDot = (station) => {
+        const lat = Number.parseFloat(station?.latitude);
+        const lng = Number.parseFloat(station?.longitude);
+        const rawStationId = Number.parseInt(station?.id, 10);
+        const stationId = Number.isFinite(rawStationId) ? rawStationId : null;
+
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+            return;
+        }
+
+        if (stationId !== null) {
+            activePopupStationId = stationId;
+        }
+
+        const marker = stationId !== null ? markerByStationId.get(stationId) : null;
+        const target = window.L.latLng(lat, lng);
+        const distanceToCenter = map.distance(map.getCenter(), target);
+
+        if (marker) {
+            marker.openPopup();
+        }
+
+        if (distanceToCenter > 30) {
+            map.flyTo(target, map.getZoom(), {
+                animate: true,
+                duration: 0.45,
+            });
+        }
+    };
+
+    const updatePriceRange = (stations = latestStations, { animateTransition = false } = {}) => {
+        if (!rangeCardElement || !rangeMinElement || !rangeMaxElement || !rangeDotsElement) {
+            return;
+        }
+
+        const filteredStations = filterStationsByTier(Array.isArray(stations) ? stations : []);
+        const pricedStations = getFilteredPricedStations(stations);
+
+        rangeDotsElement.replaceChildren();
+
+        if (pricedStations.length === 0) {
+            rangeCardElement.classList.add('is-empty');
+            rangeCardElement.classList.remove('is-dense');
+            rangeMinElement.textContent = '-';
+            rangeMaxElement.textContent = '-';
+            rangeMinElement.style.color = '#5a7a90';
+            rangeMaxElement.style.color = '#5a7a90';
+            rangeCardElement.style.setProperty('--range-dot-size', '0.92rem');
+            rangeCardElement.style.setProperty('--range-dot-border', '2px');
+
+            if (rangeEmptyElement) {
+                rangeEmptyElement.textContent = filteredStations.length > 0
+                    ? 'Für den aktuellen Filter sind keine Preiswerte im Ausschnitt verfügbar.'
+                    : 'Keine Preise im Ausschnitt.';
+            }
+
+            syncBottomOverlayMeasurements();
+            queueBottomOverlayMeasurements();
+
+            return;
+        }
+
+        rangeCardElement.classList.remove('is-empty');
+        rangeCardElement.classList.toggle('is-dense', pricedStations.length >= 50);
+
+        const localMin = Math.min(...pricedStations.map(({ price }) => price));
+        const localMax = Math.max(...pricedStations.map(({ price }) => price));
+        const useComparisonRange = currentCompareScope === 'austria'
+            && latestComparisonRange.scope === 'austria'
+            && Number.isFinite(latestComparisonRange.min)
+            && Number.isFinite(latestComparisonRange.max)
+            && latestComparisonRange.max >= latestComparisonRange.min;
+        const min = useComparisonRange ? latestComparisonRange.min : localMin;
+        const max = useComparisonRange ? latestComparisonRange.max : localMax;
+        const spread = max - min;
+        const minStation = pricedStations.find(({ price }) => price === localMin)?.station;
+        const maxStation = pricedStations.find(({ price }) => price === localMax)?.station;
+
+        rangeMinElement.textContent = priceValueFormatter.format(min);
+        rangeMaxElement.textContent = priceValueFormatter.format(max);
+        rangeMinElement.style.color = useComparisonRange ? '#22C55E' : (minStation?.price_color || '#22C55E');
+        rangeMaxElement.style.color = useComparisonRange ? '#DC2626' : (maxStation?.price_color || '#DC2626');
+
+        const dotLayoutConfig = getRangeDotLayoutConfig(pricedStations.length);
+        const trackWidth = rangeDotsElement.getBoundingClientRect().width
+            || rangeDotsElement.parentElement?.getBoundingClientRect().width
+            || 0;
+
+        rangeCardElement.style.setProperty('--range-dot-size', dotLayoutConfig.size);
+        rangeCardElement.style.setProperty('--range-dot-border', dotLayoutConfig.border);
+
+        const fragment = document.createDocumentFragment();
+        const sortedStations = pricedStations
+            .slice()
+            .sort((left, right) => left.price - right.price);
+        const idealPositions = sortedStations.map(({ price }) => {
+            if (!(trackWidth > 0)) {
+                return spread > 0 ? ((price - min) / spread) * 100 : 50;
+            }
+
+            return spread > 0 ? ((price - min) / spread) * trackWidth : trackWidth / 2;
+        });
+        const renderedPositions = pricedStations.length < 100
+            ? distributeRangeDotPositions(idealPositions, trackWidth, dotLayoutConfig.minGapPx)
+            : idealPositions;
+
+        sortedStations.forEach(({ station, price }, index) => {
+            const dot = document.createElement('button');
+            const rawStationId = Number.parseInt(station?.id, 10);
+            const stationId = Number.isFinite(rawStationId) ? rawStationId : null;
+            const exactPosition = spread > 0 ? ((price - min) / spread) * 100 : 50;
+            const renderedPosition = trackWidth > 0
+                ? (renderedPositions[index] / trackWidth) * 100
+                : renderedPositions[index];
+            const stationName = String(station?.name || 'Tankstelle').trim();
+            const stationLabel = `${stationName} · ${priceValueFormatter.format(price)} EUR/L`;
+
+            dot.type = 'button';
+            dot.className = 'range-card-dot';
+            dot.style.setProperty('--dot-position', `${renderedPosition.toFixed(2)}%`);
+            dot.style.setProperty('--dot-color', station?.price_color || '#EAB308');
+            dot.style.zIndex = String(index + 1);
+            dot.dataset.exactPosition = exactPosition.toFixed(2);
+            dot.setAttribute('aria-label', stationLabel);
+            dot.title = stationLabel;
+
+            if (stationId !== null) {
+                dot.dataset.stationId = String(stationId);
+            }
+
+            dot.addEventListener('click', () => {
+                focusStationFromRangeDot(station);
+            });
+
+            fragment.appendChild(dot);
+        });
+
+        rangeDotsElement.appendChild(fragment);
+
+        if (animateTransition) {
+            animateElementsIn(Array.from(rangeDotsElement.querySelectorAll('.range-card-dot')), 'dot-entering');
+        }
+
+        syncBottomOverlayMeasurements();
+        queueBottomOverlayMeasurements();
+    };
+
+    const getBottomOverlayPadding = () => {
+        const rangeHeight = rangeCardElement?.offsetHeight ?? 0;
+        const viewportPadding = window.innerWidth <= 820 ? 24 : 20;
+
+        return Math.max(56, rangeHeight + viewportPadding);
     };
 
     const buildPopupHtml = (station) => {
@@ -441,12 +884,14 @@ if (mapElement && typeof window.L !== 'undefined') {
         `;
     };
 
-    const renderLabels = () => {
+    const renderLabels = ({ animateTransition = false } = {}) => {
         priceLabelLayer.clearLayers();
 
         if (map.getZoom() < 13) {
             return;
         }
+
+        const newLabelElements = [];
 
         filterStationsByTier(latestStations).forEach((station) => {
             const lat = Number.parseFloat(station.latitude);
@@ -464,11 +909,20 @@ if (mapElement && typeof window.L !== 'undefined') {
                 iconAnchor: [-12, 2],
             });
 
-            window.L.marker([lat, lng], { icon, interactive: false }).addTo(priceLabelLayer);
+            const labelMarker = window.L.marker([lat, lng], { icon, interactive: false }).addTo(priceLabelLayer);
+            const labelElement = labelMarker.getElement?.() ?? labelMarker._icon;
+
+            if (labelElement) {
+                newLabelElements.push(labelElement);
+            }
         });
+
+        if (animateTransition) {
+            animateElementsIn(newLabelElements, 'label-entering');
+        }
     };
 
-    const renderStations = (stations, { restorePopup = false } = {}) => {
+    const renderStations = (stations, { restorePopup = false, animateTransition = false } = {}) => {
         if (!restorePopup) {
             activePopupStationId = null;
         }
@@ -477,19 +931,21 @@ if (mapElement && typeof window.L !== 'undefined') {
 
         try {
             markerLayer.clearLayers();
+            markerByStationId.clear();
             const safeStations = Array.isArray(stations) ? stations : [];
             latestStations = safeStations;
             updateLegendTierCounts(safeStations);
             updateLegendTierUi();
             const visibleStations = filterStationsByTier(safeStations);
             updateVisibleStationCount(visibleStations);
+            updatePriceRange(safeStations, { animateTransition });
 
             hideElement(emptyElement);
 
             if (safeStations.length === 0) {
                 activePopupStationId = null;
                 showElement(emptyElement, 'flex');
-                renderLabels();
+                renderLabels({ animateTransition });
 
                 return;
             }
@@ -499,8 +955,9 @@ if (mapElement && typeof window.L !== 'undefined') {
             // On mobile the control banner is at the top; keep extra top padding while
             // letting the bottom stay mostly free so popups can use vertical space.
             const autoPanTop = isMobileViewport ? 170 : 88;
-            const autoPanBottom = isMobileViewport ? 28 : 24;
+            const autoPanBottom = getBottomOverlayPadding();
             let markerToReopen = null;
+            const newMarkerElements = [];
 
             visibleStations.forEach((station) => {
                 const lat = Number.parseFloat(station.latitude);
@@ -542,6 +999,15 @@ if (mapElement && typeof window.L !== 'undefined') {
                     offset: window.L.point(0, -8),
                 });
                 marker.addTo(markerLayer);
+                marker._path?.classList.add('marker-filterable');
+
+                if (marker._path) {
+                    newMarkerElements.push(marker._path);
+                }
+
+                if (stationId !== null) {
+                    markerByStationId.set(stationId, marker);
+                }
 
                 if (restorePopup && stationId !== null && stationId === activePopupStationId) {
                     markerToReopen = marker;
@@ -554,7 +1020,11 @@ if (mapElement && typeof window.L !== 'undefined') {
                 activePopupStationId = null;
             }
 
-            renderLabels();
+            if (animateTransition) {
+                animateElementsIn(newMarkerElements, 'marker-entering');
+            }
+
+            renderLabels({ animateTransition });
         } finally {
             isRefreshingMarkers = false;
         }
@@ -576,6 +1046,7 @@ if (mapElement && typeof window.L !== 'undefined') {
 
         if (!toggleButton) {
             updateMobileFilterSummary();
+            updateRangeCardCaption();
             return;
         }
 
@@ -584,6 +1055,7 @@ if (mapElement && typeof window.L !== 'undefined') {
         toggleButton.setAttribute('aria-pressed', String(currentCompareScope === 'austria'));
         toggleButton.textContent = compareScopeLabels[currentCompareScope] ?? compareScopeLabels.viewport;
         updateMobileFilterSummary();
+        updateRangeCardCaption();
     };
 
     const getBoundsQuery = () => {
@@ -614,6 +1086,7 @@ if (mapElement && typeof window.L !== 'undefined') {
         hideElement(errorElement);
         hideElement(emptyElement);
         setMetaLoadingState(true);
+        setRangeLoadingState(true);
 
         const endpoint = new URL(apiUrl, window.location.origin);
         endpoint.searchParams.set('fuel', currentFuel);
@@ -642,6 +1115,7 @@ if (mapElement && typeof window.L !== 'undefined') {
                 updateCompareScopeToggle();
             }
 
+            updateComparisonRange(payload);
             renderStations(Array.isArray(payload.stations) ? payload.stations : [], {
                 restorePopup: restorePopupAfterLoad,
             });
@@ -655,6 +1129,7 @@ if (mapElement && typeof window.L !== 'undefined') {
         } finally {
             hideElement(loadingElement);
             setMetaLoadingState(false);
+            setRangeLoadingState(false);
         }
     };
 
@@ -752,7 +1227,7 @@ if (mapElement && typeof window.L !== 'undefined') {
         toggle.addEventListener('change', () => {
             tierFilterState[tier] = toggle.checked;
             updateLegendTierUi();
-            renderStations(latestStations, { restorePopup: true });
+            animateTierFilterChange();
         });
     });
 
@@ -767,6 +1242,19 @@ if (mapElement && typeof window.L !== 'undefined') {
 
     window.addEventListener('resize', () => {
         setMobileFilterCollapsed(mobileFilterCollapsed);
+        updatePriceRange();
+        syncBottomOverlayMeasurements();
+        queueBottomOverlayMeasurements();
+    });
+
+    window.addEventListener('load', () => {
+        queueBottomOverlayMeasurements();
+    });
+
+    document.fonts?.ready?.then(() => {
+        queueBottomOverlayMeasurements();
+    }).catch(() => {
+        // Ignore font-loading issues and keep the last successful layout measurement.
     });
 
     updateFuelButtons();
@@ -775,6 +1263,8 @@ if (mapElement && typeof window.L !== 'undefined') {
     updateMetaBar();
     setLegendCollapsed(true);
     updateLegendTierUi();
+    updatePriceRange();
+    queueBottomOverlayMeasurements();
 
     if ('geolocation' in navigator) {
         navigator.geolocation.getCurrentPosition(

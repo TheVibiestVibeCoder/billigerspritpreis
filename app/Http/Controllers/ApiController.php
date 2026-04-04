@@ -135,6 +135,7 @@ class ApiController extends Controller
                 && $s['longitude'] >= $bounds['west']
                 && $s['longitude'] <= $bounds['east'],
         ));
+        $comparisonRange = $this->extractPriceRange($coloredAll);
 
         return [
             'fuel' => $fuel,
@@ -146,6 +147,8 @@ class ApiController extends Controller
                 'bounds' => $bounds,
                 'comparison_scope' => 'austria',
                 'comparison_count' => count($coloredAll),
+                'comparison_min_price' => $comparisonRange['min'],
+                'comparison_max_price' => $comparisonRange['max'],
             ],
         ];
     }
@@ -205,6 +208,7 @@ class ApiController extends Controller
 
                 return $station;
             })->values()->all();
+            $comparisonRange = $this->extractPriceRange($stations);
 
             $payload = [
                 'fuel' => $fuel,
@@ -216,6 +220,8 @@ class ApiController extends Controller
                     'bounds' => $bounds,
                     'comparison_scope' => 'viewport',
                     'comparison_count' => count($stations),
+                    'comparison_min_price' => $comparisonRange['min'],
+                    'comparison_max_price' => $comparisonRange['max'],
                 ],
             ];
 
@@ -225,6 +231,29 @@ class ApiController extends Controller
         }
 
         return $payload;
+    }
+
+    private function extractPriceRange(array $stations): array
+    {
+        $prices = array_values(array_filter(
+            array_map(
+                fn (array $station): mixed => $station['price'] ?? null,
+                $stations,
+            ),
+            fn (mixed $price): bool => is_numeric($price),
+        ));
+
+        if ($prices === []) {
+            return [
+                'min' => null,
+                'max' => null,
+            ];
+        }
+
+        return [
+            'min' => round((float) min($prices), 3),
+            'max' => round((float) max($prices), 3),
+        ];
     }
 
     private function mapStationPayload(array $station, string $fuel): array

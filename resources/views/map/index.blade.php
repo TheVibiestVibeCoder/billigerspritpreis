@@ -25,6 +25,8 @@
                 --safe-bottom: env(safe-area-inset-bottom, 0px);
                 --top-card-top: calc(var(--safe-top) + 0.75rem);
                 --top-card-height: 64px;
+                --range-card-space: 112px;
+                --range-card-height: 84px;
                 --spritmap-surface: rgba(255, 255, 255, 0.90);
                 --spritmap-surface-strong: rgba(255, 255, 255, 0.96);
                 --spritmap-border: rgba(8, 50, 84, 0.13);
@@ -251,11 +253,11 @@
 
             .legend-card {
                 position: absolute;
-                bottom: calc(var(--safe-bottom) + 0.9rem);
+                bottom: calc(var(--safe-bottom) + var(--range-card-space));
                 left: 0.9rem;
                 z-index: 900;
-                padding: 0.58rem 0.66rem;
-                width: min(19rem, calc(100vw - 11.2rem));
+                padding: 0.54rem 0.58rem;
+                width: min(14.5rem, calc(100vw - 11.2rem));
             }
 
             .legend-toggle {
@@ -333,10 +335,10 @@
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                gap: 0.64rem;
-                padding: 0.2rem 0.16rem;
+                gap: 0.46rem;
+                padding: 0.16rem 0.08rem;
                 border-radius: 10px;
-                font-size: 0.78rem;
+                font-size: 0.76rem;
                 color: var(--spritmap-text-subtle);
                 transition: opacity 180ms ease, filter 180ms ease;
             }
@@ -344,14 +346,14 @@
             .legend-left {
                 display: inline-flex;
                 align-items: center;
-                gap: 0.52rem;
+                gap: 0.42rem;
                 min-width: 0;
             }
 
             .legend-right {
                 display: inline-flex;
                 align-items: center;
-                gap: 0.44rem;
+                gap: 0.34rem;
                 flex-shrink: 0;
             }
 
@@ -367,8 +369,8 @@
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                min-width: 1.9rem;
-                padding: 0.1rem 0.4rem;
+                min-width: 1.75rem;
+                padding: 0.08rem 0.34rem;
                 border-radius: 999px;
                 font-size: 0.7rem;
                 font-weight: 700;
@@ -461,6 +463,209 @@
                 transform: translateY(-0.32rem);
             }
 
+            @media (min-width: 821px) {
+                .legend-card.is-collapsed {
+                    box-sizing: border-box;
+                    height: var(--range-card-height);
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                }
+
+                .legend-card.is-collapsed .legend-toggle {
+                    min-height: 100%;
+                    height: 100%;
+                }
+            }
+
+            .range-card {
+                position: absolute;
+                left: 50%;
+                bottom: calc(var(--safe-bottom) + 0.75rem);
+                transform: translateX(-50%);
+                z-index: 910;
+                width: min(46rem, calc(100vw - 2rem));
+                padding: 0.86rem 1rem 0.98rem;
+                display: grid;
+                gap: 0.72rem;
+                pointer-events: none;
+                --range-dot-size: clamp(0.98rem, 2.3vw, 1.26rem);
+                --range-dot-border: 3px;
+            }
+
+            .range-card.is-loading {
+                opacity: 0.72;
+            }
+
+            .range-card-header {
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
+                gap: 0.75rem;
+            }
+
+            .range-card-title {
+                margin: 0;
+                font-size: 0.92rem;
+                line-height: 1.1;
+                font-weight: 800;
+                color: #18577a;
+                letter-spacing: 0.01em;
+            }
+
+            .range-card-caption {
+                font-size: 0.76rem;
+                line-height: 1;
+                font-weight: 700;
+                color: #5a7a90;
+                white-space: nowrap;
+            }
+
+            .range-card-scale {
+                display: grid;
+                grid-template-columns: auto minmax(0, 1fr) auto;
+                gap: 0.82rem;
+                align-items: center;
+            }
+
+            .range-card-value {
+                margin: 0;
+                font-family: 'Consolas', 'Menlo', 'Monaco', monospace;
+                font-size: clamp(1rem, 2.4vw, 1.24rem);
+                line-height: 1;
+                font-weight: 800;
+                letter-spacing: -0.03em;
+                font-variant-numeric: tabular-nums;
+                white-space: nowrap;
+                transition: color 180ms ease;
+            }
+
+            .range-card-track-shell {
+                position: relative;
+                min-width: 0;
+                height: 2.45rem;
+            }
+
+            .range-card-track-shell::before {
+                content: '';
+                position: absolute;
+                inset: 0.08rem 0;
+                border-radius: 999px;
+                background: repeating-linear-gradient(
+                    to right,
+                    rgba(94, 118, 136, 0.00) 0 0.5rem,
+                    rgba(94, 118, 136, 0.30) 0.5rem 0.68rem
+                );
+                opacity: 0.95;
+            }
+
+            .range-card-track-shell::after {
+                content: '';
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 50%;
+                height: 1px;
+                background: rgba(94, 118, 136, 0.14);
+                transform: translateY(-50%);
+            }
+
+            .range-card-dots {
+                position: absolute;
+                inset: 0;
+                pointer-events: none;
+            }
+
+            .range-card-dot {
+                position: absolute;
+                top: 50%;
+                left: var(--dot-position, 50%);
+                width: var(--range-dot-size);
+                aspect-ratio: 1;
+                padding: 0;
+                border-radius: 999px;
+                background: var(--dot-color, #22C55E);
+                border: var(--range-dot-border) solid rgba(255, 255, 255, 0.96);
+                box-sizing: border-box;
+                box-shadow: 0 6px 14px rgba(11, 35, 53, 0.18);
+                cursor: pointer;
+                pointer-events: auto;
+                appearance: none;
+                -webkit-appearance: none;
+                transform: translate(-50%, -50%);
+                transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+            }
+
+            .range-card-dot.dot-entering {
+                animation: range-dot-enter 220ms cubic-bezier(0.22, 1, 0.36, 1);
+            }
+
+            .range-card-dot.dot-exiting {
+                pointer-events: none;
+                animation: range-dot-exit 170ms ease both;
+            }
+
+            .range-card-dot:hover,
+            .range-card-dot:focus-visible {
+                transform: translate(-50%, -50%) scale(1.08);
+                box-shadow: 0 8px 18px rgba(11, 35, 53, 0.24);
+                filter: saturate(1.08);
+            }
+
+            .range-card-dot:focus-visible {
+                outline: 2px solid #0ea5e9;
+                outline-offset: 2px;
+            }
+
+            .range-card.is-dense .range-card-dot {
+                box-shadow: none;
+            }
+
+            .range-card.is-dense .range-card-dot:hover,
+            .range-card.is-dense .range-card-dot:focus-visible {
+                box-shadow: none;
+            }
+
+            @keyframes range-dot-enter {
+                0% {
+                    opacity: 0;
+                    transform: translate(-50%, -50%) scale(0.62);
+                }
+
+                100% {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1);
+                }
+            }
+
+            @keyframes range-dot-exit {
+                0% {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1);
+                }
+
+                100% {
+                    opacity: 0;
+                    transform: translate(-50%, -50%) scale(0.62);
+                }
+            }
+
+            .range-card-empty {
+                display: none;
+                margin: 0;
+                font-size: 0.82rem;
+                line-height: 1.35;
+                color: var(--spritmap-text-subtle);
+            }
+
+            .range-card.is-empty .range-card-scale {
+                display: none;
+            }
+
+            .range-card.is-empty .range-card-empty {
+                display: block;
+            }
+
             .leaflet-control-zoom {
                 border: 0 !important;
                 border-radius: 12px !important;
@@ -519,6 +724,11 @@
 
             .leaflet-left .leaflet-control {
                 margin-left: 0.9rem;
+            }
+
+            .leaflet-bottom .leaflet-control {
+                margin-bottom: calc(var(--range-card-space) - 0.3rem);
+                transition: margin-bottom 200ms ease;
             }
 
             .map-state {
@@ -581,6 +791,14 @@
                 background: transparent;
             }
 
+            .price-label-wrap.label-entering {
+                animation: price-label-enter 220ms cubic-bezier(0.22, 1, 0.36, 1);
+            }
+
+            .price-label-wrap.label-exiting {
+                animation: price-label-exit 170ms ease both;
+            }
+
             .price-label {
                 display: inline-block;
                 font-family: 'Consolas', 'Menlo', 'Monaco', monospace;
@@ -592,6 +810,30 @@
                 border: 1px solid rgba(255, 255, 255, 0.86);
                 background: color-mix(in srgb, var(--label-color, #eab308) 28%, #ffffff);
                 box-shadow: 0 3px 8px rgba(1, 9, 15, 0.22);
+            }
+
+            @keyframes price-label-enter {
+                0% {
+                    opacity: 0;
+                    transform: translateY(0.18rem) scale(0.94);
+                }
+
+                100% {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+
+            @keyframes price-label-exit {
+                0% {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+
+                100% {
+                    opacity: 0;
+                    transform: translateY(0.14rem) scale(0.94);
+                }
             }
 
             .spritmap-popup .leaflet-popup-content-wrapper {
@@ -870,6 +1112,44 @@
                 animation: marker-pop 420ms cubic-bezier(0.22, 1, 0.36, 1);
             }
 
+            .leaflet-interactive.marker-filterable {
+                transform-box: fill-box;
+                transform-origin: center;
+            }
+
+            .leaflet-interactive.marker-entering {
+                animation: marker-filter-enter 220ms cubic-bezier(0.22, 1, 0.36, 1);
+            }
+
+            .leaflet-interactive.marker-exiting {
+                pointer-events: none;
+                animation: marker-filter-exit 170ms ease both;
+            }
+
+            @keyframes marker-filter-enter {
+                0% {
+                    opacity: 0;
+                    transform: scale(0.56);
+                }
+
+                100% {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+            }
+
+            @keyframes marker-filter-exit {
+                0% {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+
+                100% {
+                    opacity: 0;
+                    transform: scale(0.56);
+                }
+            }
+
             @keyframes marker-pop {
                 0% {
                     transform: scale(1);
@@ -1030,7 +1310,13 @@
                 .mobile-filter-panel-inner,
                 .mobile-filter-toggle-chevron,
                 .spritmap-popup .leaflet-popup-content-wrapper,
-                .leaflet-interactive.marker-pop {
+                .leaflet-interactive.marker-pop,
+                .leaflet-interactive.marker-entering,
+                .leaflet-interactive.marker-exiting,
+                .price-label-wrap.label-entering,
+                .price-label-wrap.label-exiting,
+                .range-card-dot.dot-entering,
+                .range-card-dot.dot-exiting {
                     transition: none;
                     animation: none;
                 }
@@ -1242,10 +1528,36 @@
                 }
 
                 .legend-card {
-                    bottom: calc(var(--safe-bottom) + 0.6rem);
+                    bottom: calc(var(--safe-bottom) + var(--range-card-space));
                     left: 0.5rem;
                     width: min(16rem, calc(100vw - 1rem));
                     padding: 0.65rem 0.72rem;
+                }
+
+                .range-card {
+                    left: 0.5rem;
+                    right: 0.5rem;
+                    bottom: calc(var(--safe-bottom) + 0.55rem);
+                    transform: none;
+                    width: auto;
+                    padding: 0.74rem 0.82rem 0.82rem;
+                    gap: 0.6rem;
+                }
+
+                .range-card-title {
+                    font-size: 0.86rem;
+                }
+
+                .range-card-caption {
+                    font-size: 0.72rem;
+                }
+
+                .range-card-scale {
+                    gap: 0.62rem;
+                }
+
+                .range-card-track-shell {
+                    height: 2.15rem;
                 }
 
                 .legend-title {
@@ -1305,8 +1617,40 @@
                 .legend-card {
                     left: 0.5rem;
                     right: 0.5rem;
-                    bottom: calc(var(--safe-bottom) + 0.52rem);
+                    bottom: calc(var(--safe-bottom) + var(--range-card-space));
                     width: auto;
+                }
+
+                .range-card {
+                    left: 0.45rem;
+                    right: 0.45rem;
+                    bottom: calc(var(--safe-bottom) + 0.48rem);
+                    padding: 0.7rem 0.76rem 0.76rem;
+                    gap: 0.54rem;
+                }
+
+                .range-card-header {
+                    gap: 0.5rem;
+                }
+
+                .range-card-title {
+                    font-size: 0.8rem;
+                }
+
+                .range-card-caption {
+                    font-size: 0.68rem;
+                }
+
+                .range-card-value {
+                    font-size: 0.96rem;
+                }
+
+                .range-card-track-shell::before {
+                    background: repeating-linear-gradient(
+                        to right,
+                        rgba(94, 118, 136, 0.00) 0 0.4rem,
+                        rgba(94, 118, 136, 0.28) 0.4rem 0.56rem
+                    );
                 }
 
                 .legend-list {
@@ -1357,6 +1701,11 @@
                 }
 
                 .legend-card {
+                    left: 0.35rem;
+                    right: 0.35rem;
+                }
+
+                .range-card {
                     left: 0.35rem;
                     right: 0.35rem;
                 }
@@ -1523,6 +1872,23 @@
                         </ul>
                     </div>
                 </div>
+            </section>
+
+            <section class="ui-card range-card" aria-label="Preisverteilung im Ausschnitt" data-price-range>
+                <div class="range-card-header">
+                    <p class="range-card-title">Preise im Ausschnitt</p>
+                    <span class="range-card-caption" data-range-scope>Ansicht-Vergleich</span>
+                </div>
+
+                <div class="range-card-scale">
+                    <p class="range-card-value" data-range-min>-</p>
+                    <div class="range-card-track-shell">
+                        <div class="range-card-dots" data-range-dots></div>
+                    </div>
+                    <p class="range-card-value" data-range-max>-</p>
+                </div>
+
+                <p class="range-card-empty" data-range-empty>Keine Preise im Ausschnitt.</p>
             </section>
 
             <section id="map-loading" class="map-state hidden" aria-live="polite">
